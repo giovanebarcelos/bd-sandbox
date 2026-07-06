@@ -5,7 +5,7 @@ número e contém um subconjunto das pastas abaixo, conforme a natureza do conte
 
 ```
 classNN/
-├── diagrams/    # Diagramas Mermaid (.mmd) — ER, arquitetura, fluxos
+├── diagrams/    # Diagramas PlantUML (.puml) — ER, arquitetura, fluxos
 ├── oracle/      # Scripts SQL/PL-SQL para Oracle Database
 ├── postgresql/  # Scripts SQL/PL-pgSQL para PostgreSQL
 ├── java/        # Exemplos de acesso/uso via Java (JDBC)
@@ -15,13 +15,13 @@ classNN/
 ## Nomenclatura
 
 `BDNNYY-NomeDescritivo.ext`, onde `NN` é o número da aula (01-32) e `YY` um sequencial
-(01-99) dentro da aula. Diagramas seguem `BD-NN-NomeDoDiagrama.mmd`.
+(01-99) dentro da aula. Diagramas seguem `BD-NN-NomeDoDiagrama.puml`.
 
 ## Tecnologias Utilizadas
 
 - **SGBDs:** Oracle Database XE, PostgreSQL
 - **Linguagens de aplicação:** Java 17+ (JDBC), Python 3.11+ (`oracledb`, `psycopg2`)
-- **Diagramas:** Mermaid
+- **Diagramas:** PlantUML — visualizar em https://plantuml.com/
 - **Infraestrutura:** Docker / Docker Compose
 
 ## Sumário por Aula
