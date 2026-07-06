@@ -1,0 +1,180 @@
+-- =============================================================================
+-- BD1301-DQL.sql
+-- Aula 13 - DQL Basico: SELECT, WHERE, ORDER BY e funcoes de data/string (PostgreSQL)
+-- Estudo de caso: BookHub - livraria online
+-- Prof. Giovane Barcelos
+-- =============================================================================
+-- Script autocontido: recria o esquema BookHub e demonstra os fundamentos de DQL.
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 0. LIMPEZA E RECRIACAO DO ESQUEMA (ver detalhes/comentarios em BD1201-DML.sql)
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS ItemVenda, Venda, Livro, Cliente, Autor CASCADE;
+
+CREATE TABLE Autor (
+    autor_id        INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nome            VARCHAR(150) NOT NULL,
+    nacionalidade   VARCHAR(60)  NOT NULL,
+    data_nascimento DATE         NOT NULL
+);
+
+CREATE TABLE Livro (
+    livro_id        INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    autor_id        INTEGER      NOT NULL REFERENCES Autor (autor_id),
+    titulo          VARCHAR(200) NOT NULL,
+    genero          VARCHAR(60)  NOT NULL,
+    preco           NUMERIC(10,2) NOT NULL,
+    tipo            CHAR(1)      NOT NULL CHECK (tipo IN ('F','D')),
+    ano_publicacao  INTEGER      NOT NULL
+);
+
+CREATE TABLE Cliente (
+    cliente_id      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nome            VARCHAR(150) NOT NULL,
+    email           VARCHAR(150),   -- aceita NULL nesta aula para demonstrar COALESCE
+    telefone        VARCHAR(30)  NOT NULL,
+    data_cadastro   DATE         NOT NULL
+);
+
+CREATE TABLE Venda (
+    venda_id        INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    data_venda      DATE         NOT NULL,
+    forma_pagamento VARCHAR(30)  NOT NULL,
+    valor_total     NUMERIC(10,2) NOT NULL,
+    cliente_id      INTEGER      NOT NULL REFERENCES Cliente (cliente_id)
+);
+
+CREATE TABLE ItemVenda (
+    itemvenda_id    INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    venda_id        INTEGER      NOT NULL REFERENCES Venda (venda_id),
+    livro_id        INTEGER      NOT NULL REFERENCES Livro (livro_id),
+    preco_unitario  NUMERIC(10,2) NOT NULL,
+    quantidade      INTEGER      NOT NULL
+);
+
+INSERT INTO Autor (nome, nacionalidade, data_nascimento) VALUES
+    ('Dick Vigarista', 'Brasil', DATE '1978-05-12'),
+    ('Penelope Charmosa', 'Reino Unido', DATE '1965-11-02'),
+    ('Muttley', 'Estados Unidos', DATE '1985-07-20'),
+    ('Aurora Beltrame', 'Portugal', DATE '1990-03-15');
+
+INSERT INTO Livro (autor_id, titulo, genero, preco, tipo, ano_publicacao) VALUES
+    (1, 'Programacao em Java - Avancado', 'Tecnologia', 120.00, 'F', 2019),
+    (1, 'Introducao ao SQL', 'Tecnologia', 45.00, 'F', 2015),
+    (2, 'Romance das Estacoes', 'Ficcao', 35.50, 'D', 2021),
+    (3, 'Historias do Oriente', 'Ficcao', 55.00, 'F', 1998),
+    (2, 'Aplicacoes em Rust', 'Tecnologia', 89.90, 'D', 2022),
+    (3, 'Contos de Inverno', 'Ficcao', 29.90, 'D', 2020),
+    (1, 'Banco de Dados Essencial', 'Tecnologia', 99.00, 'F', 2023);
+
+INSERT INTO Cliente (nome, email, telefone, data_cadastro) VALUES
+    ('Ze Bugadinho', 'ze.bugadinho@email.com', '+55-11-99999-0001', DATE '2023-02-10'),
+    ('Ana Stackoverflow', 'ana.stackoverflow@email.com', '+55-21-98888-1111', DATE '2022-11-05'),
+    ('Beto Nullpointer', 'beto.nullpointer@email.com', '+55-41-97777-2222', DATE '2024-01-03'),
+    ('Carla Datasteria', NULL, '+55-51-96666-3333', DATE '2024-06-20');
+-- Observacao: o email de Carla foi deixado NULL de proposito, para demonstrar
+-- COALESCE mais adiante.
+
+INSERT INTO Venda (data_venda, forma_pagamento, valor_total, cliente_id) VALUES
+    (DATE '2025-08-10', 'Cartao', 165.00, 1),
+    (DATE '2025-08-12', 'Boleto', 160.90, 2),
+    (DATE '2025-09-01', 'Pix', 99.00, 3);
+
+INSERT INTO ItemVenda (venda_id, livro_id, preco_unitario, quantidade) VALUES
+    (1, 1, 120.00, 1),
+    (1, 2, 45.00, 1),
+    (2, 3, 35.50, 2),
+    (2, 5, 89.90, 1),
+    (3, 7, 99.00, 1);
+
+-- -----------------------------------------------------------------------------
+-- 1. SELECT basico
+-- -----------------------------------------------------------------------------
+-- 1.1 Todas as colunas
+SELECT * FROM Livro;
+
+-- 1.2 Projecao de colunas especificas com alias
+SELECT titulo AS titulo_livro, preco, tipo FROM Livro;
+
+-- 1.3 Coluna calculada (expressao aritmetica no SELECT)
+SELECT titulo, preco, ROUND(preco * 0.9, 2) AS preco_com_desconto FROM Livro;
+
+-- -----------------------------------------------------------------------------
+-- 2. WHERE - filtros
+-- -----------------------------------------------------------------------------
+-- 2.1 Igualdade e comparacao numerica
+SELECT titulo, preco FROM Livro WHERE tipo = 'D';
+SELECT titulo, preco FROM Livro WHERE preco > 50;
+
+-- 2.2 Operadores logicos combinados
+SELECT titulo, genero, preco FROM Livro
+ WHERE genero = 'Tecnologia' AND preco BETWEEN 40 AND 100;
+
+-- 2.3 IN, LIKE/ILIKE e IS NULL
+SELECT titulo FROM Livro WHERE genero IN ('Ficcao', 'Tecnologia');
+SELECT titulo FROM Livro WHERE titulo LIKE '%SQL%';
+SELECT titulo FROM Livro WHERE titulo ILIKE '%sql%'; -- ILIKE: case-insensitive, exclusivo do PostgreSQL
+SELECT nome, email FROM Cliente WHERE email IS NULL;
+
+-- -----------------------------------------------------------------------------
+-- 3. ORDER BY
+-- -----------------------------------------------------------------------------
+SELECT titulo, preco FROM Livro ORDER BY preco DESC;
+SELECT titulo, genero, preco FROM Livro ORDER BY genero ASC, preco DESC;
+
+-- -----------------------------------------------------------------------------
+-- 4. Funcoes de data (PostgreSQL: NOW(), CURRENT_DATE, TO_CHAR, AGE)
+-- -----------------------------------------------------------------------------
+-- 4.1 Data/hora atual do servidor
+SELECT NOW() AS agora, CURRENT_DATE AS hoje;
+
+-- 4.2 Formatando datas com TO_CHAR (mesma funcao do Oracle, com pequenas
+--     diferencas de mascara em casos avancados)
+SELECT nome,
+       TO_CHAR(data_cadastro, 'DD/MM/YYYY') AS cadastro_br,
+       TO_CHAR(data_cadastro, 'YYYY-MM') AS ano_mes
+  FROM Cliente;
+
+-- 4.3 Tempo de casa do cliente (em dias e em meses) - AGE() e exclusivo do PostgreSQL
+SELECT nome,
+       CURRENT_DATE - data_cadastro AS dias_de_cadastro,
+       AGE(CURRENT_DATE, data_cadastro) AS tempo_de_cadastro,
+       EXTRACT(YEAR FROM AGE(CURRENT_DATE, data_cadastro)) * 12
+         + EXTRACT(MONTH FROM AGE(CURRENT_DATE, data_cadastro)) AS meses_de_cadastro
+  FROM Cliente;
+
+-- 4.4 Ultimo dia do mes da venda e proximo mes
+SELECT venda_id, data_venda,
+       (DATE_TRUNC('month', data_venda) + INTERVAL '1 month - 1 day')::date AS fim_do_mes,
+       (data_venda + INTERVAL '1 month')::date AS mesmo_dia_mes_seguinte
+  FROM Venda;
+
+-- -----------------------------------------------------------------------------
+-- 5. Funcoes de string (PostgreSQL)
+-- -----------------------------------------------------------------------------
+SELECT UPPER(nome) AS nome_maiusculo, LOWER(nome) AS nome_minusculo FROM Cliente;
+SELECT titulo, LENGTH(titulo) AS tamanho_titulo, SUBSTRING(titulo, 1, 10) AS resumo FROM Livro;
+SELECT nome, telefone, REPLACE(telefone, '-', '') AS telefone_sem_traco FROM Cliente;
+SELECT nome || ' <' || COALESCE(email, 'sem-email@bookhub.com') || '>' AS contato FROM Cliente;
+
+-- -----------------------------------------------------------------------------
+-- 6. Tratamento de nulos: COALESCE (PostgreSQL)
+-- -----------------------------------------------------------------------------
+-- COALESCE(expr1, expr2, ..., padrao): retorna o primeiro valor nao nulo da lista
+SELECT nome, COALESCE(email, 'Nao informado') AS email_ou_padrao FROM Cliente;
+
+-- COALESCE aceita N argumentos (equivalente ao NVL2 do Oracle exige CASE)
+SELECT nome,
+       CASE WHEN email IS NOT NULL THEN 'Possui email' ELSE 'Sem email' END AS status_email
+  FROM Cliente;
+
+SELECT nome, COALESCE(email, telefone, 'Sem contato') AS contato_preferencial FROM Cliente;
+
+-- NULLIF: retorna NULL se os dois argumentos forem iguais (util para evitar
+-- divisao por zero, por exemplo) - tambem existe no Oracle
+SELECT titulo, preco, NULLIF(preco, 0) AS preco_valido FROM Livro;
+
+-- =============================================================================
+-- Fim do script. Equivalente Oracle: repository/class13/oracle/BD1301-DQL.sql
+-- =============================================================================

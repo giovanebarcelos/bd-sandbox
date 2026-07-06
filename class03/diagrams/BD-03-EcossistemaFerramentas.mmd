@@ -1,0 +1,28 @@
+flowchart LR
+    subgraph OracleTools["Ferramentas Oracle"]
+        SQLDev["SQL Developer"]
+        SQLPlus["SQL*Plus (CLI)"]
+        Toad["Toad for Oracle"]
+    end
+
+    subgraph PgTools["Ferramentas PostgreSQL"]
+        DBeaver["DBeaver"]
+        PgAdmin["pgAdmin"]
+        Psql["psql (CLI)"]
+        DataGrip["DataGrip"]
+    end
+
+    subgraph Docker["Ambiente Docker (docker compose)"]
+        OraDB[("Oracle XE\ncontainer :1521")]
+        PgDB[("PostgreSQL\ncontainer :5432")]
+    end
+
+    SQLDev --> OraDB
+    SQLPlus --> OraDB
+    Toad --> OraDB
+    DBeaver --> PgDB
+    PgAdmin --> PgDB
+    Psql --> PgDB
+    DataGrip --> PgDB
+    DBeaver -.->|"tambem suporta"| OraDB
+    DataGrip -.->|"tambem suporta"| OraDB

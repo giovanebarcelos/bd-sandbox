@@ -1,0 +1,49 @@
+# BD0301-DockerCompose.yml
+# Ambiente de laboratorio: Oracle Database XE (Express Edition)
+# Disciplina: Banco de Dados | Aula 03 | UA1
+#
+# Uso:
+#   cd repository/class03/oracle
+#   docker compose -f BD0301-DockerCompose.yml up -d
+#
+# Conexao (via SQL Developer / SQL*Plus):
+#   host:     localhost
+#   porta:    1521
+#   servico:  XEPDB1
+#   usuario:  system   (senha definida em ORACLE_PWD abaixo)
+#   usuario de aplicacao criado automaticamente: bd_aluno / bd_aluno_pwd
+#
+# Observacao: a imagem oficial "gvenzl/oracle-xe" e leve e amplamente usada
+# para ambientes de estudo/CI, pois nao exige aceite manual de licenca via
+# Oracle Container Registry.
+
+services:
+  oracle-xe:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: bd-oracle-xe
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: "bd_admin_pwd"
+      APP_USER: "bd_aluno"
+      APP_USER_PASSWORD: "bd_aluno_pwd"
+    volumes:
+      - oracle_xe_data:/opt/oracle/oradata
+      - ./init-scripts:/docker-entrypoint-initdb.d/startup
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  oracle_xe_data:
+
+# Para subir Oracle XE e PostgreSQL juntos no mesmo laboratorio, combine este
+# arquivo com o par PostgreSQL:
+#   docker compose \
+#     -f ../oracle/BD0301-DockerCompose.yml \
+#     -f ../postgresql/BD0301-DockerCompose.yml \
+#     up -d

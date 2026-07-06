@@ -1,0 +1,31 @@
+flowchart TB
+    subgraph ORACLE["Oracle Database - Redo Log / Undo / Flashback"]
+        direction TB
+        OA["Transacao executa UPDATE/INSERT/DELETE"] --> OB["Undo segment guarda a\nversao ANTERIOR da linha\n(para rollback e read consistency)"]
+        OA --> OC["Redo log buffer registra a\nmudanca ANTES do COMMIT\n(write-ahead logging)"]
+        OC --> OD["LGWR grava o redo log buffer\nnos Online Redo Log files"]
+        OD --> OE{"COMMIT confirmado?"}
+        OE -->|Sim| OF["Durabilidade garantida:\nredo persistido em disco"]
+        OE -->|Nao / crash| OG["Instance recovery na proxima\ninicializacao: roll forward\ncom redo, depois roll back\ncom undo das transacoes abertas"]
+        OD --> OH["ARCn arquiva os redo logs cheios\ncomo Archived Redo Logs"]
+        OH --> OI["RMAN usa archived redo logs\npara recuperacao ponto-a-ponto"]
+        OF --> OJ["FLASHBACK QUERY: le o estado\npassado via undo (AS OF TIMESTAMP)"]
+        OF --> OK["FLASHBACK TABLE ... TO BEFORE DROP\n(recicla da Recycle Bin)"]
+        OF --> OL["FLASHBACK TABLE ... TO TIMESTAMP\n(reverte linhas via undo)"]
+    end
+
+    subgraph POSTGRES["PostgreSQL - Write-Ahead Log (WAL)"]
+        direction TB
+        PA["Transacao executa UPDATE/INSERT/DELETE"] --> PB["Registro de WAL e escrito\nno WAL buffer ANTES da\nmudanca ser aplicada nas paginas"]
+        PB --> PC["WAL writer grava o WAL buffer\nnos arquivos de pg_wal/"]
+        PC --> PD{"COMMIT confirmado?"}
+        PD -->|Sim| PE["fsync do WAL garante\ndurabilidade (synchronous_commit)"]
+        PD -->|Nao / crash| PF["Crash recovery na proxima\ninicializacao: REDO a partir\ndo ultimo checkpoint, replay do WAL"]
+        PC --> PG["archive_command copia os\nsegmentos de WAL para\narmazenamento de arquivamento"]
+        PG --> PH["pg_basebackup + WAL archivado\npermitem Point-in-Time Recovery (PITR)"]
+        PH --> PI["recovery_target_time define\no instante exato de restauracao"]
+        PE --> PJ["pg_stat_wal / pg_stat_activity\nmonitoram atividade de WAL"]
+    end
+
+    ORACLE -.->|"Estrategia: undo + redo\nseparados, flashback logico"| COMPARA["Recupera estado passado\nsem restaurar backup completo"]
+    POSTGRES -.->|"Estrategia: WAL unico,\nreplay fisico de paginas"| COMPARB["Recupera para ponto no tempo\nvia replay de WAL sobre backup base"]

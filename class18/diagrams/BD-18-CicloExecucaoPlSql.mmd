@@ -1,0 +1,9 @@
+flowchart TD
+    A["Chamada do bloco/procedure/function"] --> B["Secao DECLARE (opcional): variaveis, %TYPE, %ROWTYPE, cursores"]
+    B --> C["Secao BEGIN: comandos SQL e PL/SQL executados em sequencia"]
+    C --> D{"Ocorreu erro?"}
+    D -- "Nao" --> E["COMMIT implicito/explicito das alteracoes"]
+    D -- "Sim" --> F["Secao EXCEPTION: WHEN excecao_especifica / WHEN OTHERS"]
+    F --> G["ROLLBACK ou ROLLBACK TO SAVEPOINT"]
+    E --> H["END - controle retorna ao chamador"]
+    G --> H

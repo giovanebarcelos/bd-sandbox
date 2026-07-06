@@ -1,0 +1,16 @@
+flowchart TD
+    U1["Usuario Final / Aplicacao Web-Mobile"] --> A["Camada de Aplicacao"]
+    U2["Desenvolvedor"] --> A
+    U3["DBA"] --> S
+    A -->|"SQL"| S["SGBD"]
+    subgraph S["SGBD (Oracle Database / PostgreSQL)"]
+        direction TB
+        Q["Processador de Consultas / Otimizador"]
+        T["Gerenciador de Transacoes (ACID)"]
+        C["Controle de Concorrencia"]
+        D["Dicionario de Dados / Catalogo"]
+        E["Motor de Armazenamento"]
+        Q --> T --> C --> E
+        D --- Q
+    end
+    E --> F[("Armazenamento Fisico\nTablespaces / Arquivos de Dados")]

@@ -1,0 +1,30 @@
+erDiagram
+    CLIENTE ||--o{ PEDIDO : realiza
+    PEDIDO ||--|{ ITEM_PEDIDO : contem
+    PRODUTO ||--o{ ITEM_PEDIDO : compoe
+
+    CLIENTE {
+        int cliente_id PK
+        string nome
+        string email UK
+        string telefone
+    }
+    PEDIDO {
+        int pedido_id PK
+        int cliente_id FK
+        date data_pedido
+        string status
+    }
+    PRODUTO {
+        int produto_id PK
+        string nome
+        decimal preco
+        int estoque
+    }
+    ITEM_PEDIDO {
+        int item_pedido_id PK
+        int pedido_id FK
+        int produto_id FK
+        int quantidade
+        decimal preco_unitario
+    }

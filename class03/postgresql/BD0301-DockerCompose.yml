@@ -1,0 +1,60 @@
+# BD0301-DockerCompose.yml
+# Ambiente de laboratorio: PostgreSQL + pgAdmin
+# Disciplina: Banco de Dados | Aula 03 | UA1
+#
+# Uso:
+#   cd repository/class03/postgresql
+#   docker compose -f BD0301-DockerCompose.yml up -d
+#
+# Conexao (via psql / DBeaver / pgAdmin / DataGrip):
+#   host:     localhost
+#   porta:    5432
+#   database: bd_curso
+#   usuario:  bd_aluno
+#   senha:    bd_aluno_pwd
+#
+# pgAdmin (interface web) fica disponivel em http://localhost:5050
+#   login:  aluno@bd.local
+#   senha:  bd_pgadmin_pwd
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: bd-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: "bd_curso"
+      POSTGRES_USER: "bd_aluno"
+      POSTGRES_PASSWORD: "bd_aluno_pwd"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bd_aluno -d bd_curso"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: bd-pgadmin
+    depends_on:
+      - postgres
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "aluno@bd.local"
+      PGADMIN_DEFAULT_PASSWORD: "bd_pgadmin_pwd"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+# Para subir Oracle XE e PostgreSQL juntos no mesmo laboratorio, combine este
+# arquivo com o par Oracle:
+#   docker compose \
+#     -f ../oracle/BD0301-DockerCompose.yml \
+#     -f ../postgresql/BD0301-DockerCompose.yml \
+#     up -d

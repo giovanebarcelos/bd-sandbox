@@ -1,0 +1,26 @@
+flowchart TB
+    subgraph ORACLE["Ecossistema Oracle - RAC + GoldenGate"]
+        APP1[Aplicacao Cliente] --> SCAN[SCAN Listener]
+        SCAN --> RAC1[Instancia RAC no 1]
+        SCAN --> RAC2[Instancia RAC no 2]
+        SCAN --> RAC3[Instancia RAC no 3]
+        RAC1 --- ASM[(Armazenamento Compartilhado - ASM)]
+        RAC2 --- ASM
+        RAC3 --- ASM
+        RAC1 -. GoldenGate: replicacao logica .-> DR1[(Site Remoto / DR)]
+    end
+
+    subgraph POSTGRES["Ecossistema PostgreSQL - Streaming + Citus + Particionamento"]
+        APP2[Aplicacao Cliente] --> LB[Load Balancer / Pgpool / Patroni]
+        LB --> PRIMARY[(Primario)]
+        PRIMARY -- streaming sincrona --> STANDBY1[(Standby Sincrono)]
+        PRIMARY -- streaming assincrona --> STANDBY2[(Standby Assincrono - leitura)]
+        PRIMARY --> COORD[Coordenador Citus]
+        COORD --> WORKER1[(Worker - Shard 1)]
+        COORD --> WORKER2[(Worker - Shard 2)]
+        COORD --> WORKER3[(Worker - Shard 3)]
+        WORKER1 -. tabela particionada por RANGE/LIST/HASH .-> PART1[(Particao 2025)]
+        WORKER1 -. . -> PART2[(Particao 2026)]
+    end
+
+    ORACLE -. mesma decisao arquitetural, ferramentas distintas .-> POSTGRES

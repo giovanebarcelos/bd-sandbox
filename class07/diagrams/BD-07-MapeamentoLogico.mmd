@@ -1,0 +1,52 @@
+erDiagram
+    ALUNO ||--o{ ALUNO_TELEFONE : possui
+    ALUNO ||--o{ MATRICULA : realiza
+    PROFESSOR |o--|| SALA : ocupa
+    PROFESSOR ||--o{ TURMA : leciona
+    DISCIPLINA ||--o{ TURMA : origina
+    TURMA ||--o{ MATRICULA : recebe
+
+    ALUNO {
+        int matricula PK
+        string nome
+        date data_nascimento
+        string email
+        string endereco_rua
+        string endereco_numero
+        string endereco_cidade
+        string endereco_uf
+    }
+    ALUNO_TELEFONE {
+        int matricula PK,FK
+        string telefone PK
+    }
+    PROFESSOR {
+        int registro PK
+        string nome
+        string titulacao
+        int sala_id FK
+    }
+    SALA {
+        int id PK
+        string bloco
+        int capacidade
+    }
+    DISCIPLINA {
+        string codigo PK
+        string nome
+        int carga_horaria
+    }
+    TURMA {
+        string codigo_disciplina PK,FK
+        int numero_turma PK
+        string semestre
+        int registro_professor FK
+    }
+    MATRICULA {
+        int matricula_aluno PK,FK
+        string codigo_disciplina PK,FK
+        int numero_turma PK,FK
+        date data_matricula
+        decimal nota
+        string situacao
+    }

@@ -1,0 +1,29 @@
+erDiagram
+    PESSOA ||--o| FUNCIONARIO : "e_um"
+    PESSOA ||--o| CLIENTE : "e_um"
+    FUNCIONARIO ||--o{ DEPENDENTE : possui
+
+    PESSOA {
+        int pessoa_id PK
+        string cpf UK
+        string nome
+        date data_nascimento
+    }
+    FUNCIONARIO {
+        int pessoa_id PK
+        string matricula_funcional UK
+        decimal salario
+        date data_admissao
+    }
+    CLIENTE {
+        int pessoa_id PK
+        string codigo_cliente UK
+        decimal limite_credito
+    }
+    DEPENDENTE {
+        int dependente_id PK
+        int funcionario_id FK
+        string nome
+        string parentesco
+        date data_nascimento
+    }

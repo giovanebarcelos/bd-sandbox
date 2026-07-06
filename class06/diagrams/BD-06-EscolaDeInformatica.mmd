@@ -1,0 +1,62 @@
+erDiagram  
+    ALUNO {  
+        int aluno_id PK "SERIAL"  
+        date data_matricula  
+        varchar nome  
+        varchar endereco  
+        varchar telefone  
+        date data_nascimento  
+        decimal altura  
+        decimal peso  
+    }  
+
+    PROFESSOR {  
+        int professor_id PK "SERIAL"  
+        varchar cpf UK  
+        varchar nome  
+        date data_nascimento  
+        varchar titulacao  
+    }  
+
+    CURSO {  
+        int curso_id PK "SERIAL"  
+        varchar nome  
+    }  
+
+    TURMA {  
+        int turma_id PK "SERIAL"  
+        int qtd_alunos  
+        time horario  
+        int duracao  
+        date data_inicial  
+        date data_final  
+        int professor_id FK  
+        int curso_id FK  
+        int alunomonitor_id FK  
+    }  
+
+    TELEFONE {  
+        int telefone_id PK "SERIAL"  
+        varchar numero  
+        int professor_id FK  
+    }  
+
+    MATRICULA {  
+        int matricula_id PK "SERIAL"  
+        int turma_id FK  
+        int aluno_id FK  
+    }  
+
+    AUSENCIA {  
+        int ausencia_id PK  
+        int matricula_id PK_FK  
+        date data  
+    }  
+
+    PROFESSOR ||--o{ TELEFONE : possui  
+    PROFESSOR ||--o{ TURMA : orienta  
+    CURSO ||--o{ TURMA : possui  
+    ALUNO ||--o{ MATRICULA : realiza  
+    TURMA ||--o{ MATRICULA : contem  
+    MATRICULA ||--o{ AUSENCIA : registra  
+    ALUNO ||--o| TURMA : monitora  

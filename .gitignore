@@ -1,0 +1,19 @@
+# Arquivos gerados/compilados
+*.pyc
+__pycache__/
+
+# HTML (nao faz parte do curso - .md e a fonte unica)
+*.html
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de IDE
+.vscode/
+.idea/
+
+# Arquivos temporarios
+*.tmp
+*.swp
+*~

@@ -1,0 +1,37 @@
+flowchart LR
+    subgraph ORA["Oracle Database - Instance"]
+        direction TB
+        ORA_APP["Conexoes de Clientes"] --> ORA_PGA["PGA\n(Program Global Area\nprivada por sessao)"]
+        ORA_SGA["SGA\n(System Global Area\ncompartilhada)"]
+        ORA_SGA --> ORA_BUF["Database Buffer Cache"]
+        ORA_SGA --> ORA_SHARED["Shared Pool"]
+        ORA_SGA --> ORA_REDO["Redo Log Buffer"]
+        ORA_PGA --> ORA_SGA
+        ORA_BG["Processos Background"]
+        ORA_BG --> PMON["PMON - Process Monitor"]
+        ORA_BG --> SMON["SMON - System Monitor"]
+        ORA_BG --> DBWR["DBWn - Database Writer"]
+        ORA_BG --> LGWR["LGWR - Log Writer"]
+        ORA_BG --> CKPT["CKPT - Checkpoint"]
+        ORA_SGA --> ORA_BG
+        ORA_BG --> ORA_DATA[("Datafiles / Redo Logs\n/ Control Files")]
+    end
+
+    subgraph PG["PostgreSQL - Cluster"]
+        direction TB
+        PG_APP["Conexoes de Clientes"] --> PG_BACKEND["Processo Backend\n(1 por conexao)"]
+        PG_POST["postmaster\n(processo supervisor)"]
+        PG_POST --> PG_BACKEND
+        PG_SHARED["Shared Buffers\n(cache compartilhado)"]
+        PG_WAL["WAL Buffers\n(Write-Ahead Log)"]
+        PG_BACKEND --> PG_SHARED
+        PG_BACKEND --> PG_WAL
+        PG_AUX["Processos Auxiliares"]
+        PG_AUX --> BGWRITER["bgwriter - Background Writer"]
+        PG_AUX --> WALWRITER["walwriter - WAL Writer"]
+        PG_AUX --> AUTOVAC["autovacuum launcher"]
+        PG_AUX --> CHECKPOINTER["checkpointer"]
+        PG_POST --> PG_AUX
+        PG_SHARED --> PG_AUX
+        PG_AUX --> PG_DATA[("Data Files / WAL Segments\n/ pg_wal")]
+    end

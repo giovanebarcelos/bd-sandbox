@@ -1,0 +1,21 @@
+flowchart TD
+    N["NoSQL - Not Only SQL"] --> D["Documento"]
+    N --> KV["Chave-Valor"]
+    N --> CF["Coluna / Wide-Column"]
+    N --> G["Grafo"]
+
+    D --> D1["MongoDB"]
+    D --> D2["Documentos JSON/BSON agrupados em colecoes"]
+    D --> D3["Caso de uso: catalogos, conteudo semi-estruturado"]
+
+    KV --> KV1["Redis"]
+    KV --> KV2["Par chave -> valor opaco, acesso O(1)"]
+    KV --> KV3["Caso de uso: cache, sessao, filas"]
+
+    CF --> CF1["Cassandra"]
+    CF --> CF2["Familias de colunas distribuidas por partition key"]
+    CF --> CF3["Caso de uso: series temporais, IoT, alta escrita"]
+
+    G --> G1["Neo4j"]
+    G --> G2["Nos, relacionamentos e propriedades"]
+    G --> G3["Caso de uso: redes sociais, recomendacao, deteccao de fraude"]

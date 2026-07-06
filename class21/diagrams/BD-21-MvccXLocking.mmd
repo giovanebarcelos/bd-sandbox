@@ -1,0 +1,29 @@
+flowchart TB
+    subgraph ORACLE["Oracle Database - Locking Pessimista"]
+        direction TB
+        OA["Transacao A: SELECT ... FOR UPDATE na linha X"] --> OB["Linha X recebe lock exclusivo"]
+        OB --> OC{"Transacao B tambem\npede lock na linha X?"}
+        OC -->|Sim| OD["B fica bloqueada (blocking)\nate A executar COMMIT/ROLLBACK"]
+        OC -->|Nao| OE["B segue livre em outras linhas"]
+        OD --> OF["A executa COMMIT: libera o lock"]
+        OF --> OG["B eh liberada e prossegue\ncom dados ja atualizados"]
+        OG --> OH{"Ordem cruzada de locks\nentre A e B?"}
+        OH -->|Sim| OI["Oracle detecta deadlock\nORA-00060: aborta uma transacao"]
+        OH -->|Nao| OJ["Execucao serializada, sem conflito"]
+    end
+
+    subgraph POSTGRES["PostgreSQL - MVCC (Multi-Version Concurrency Control)"]
+        direction TB
+        PA["Transacao A inicia: recebe snapshot proprio"] --> PB["Transacao B inicia: recebe snapshot proprio"]
+        PB --> PC["A executa UPDATE na linha X:\ncria NOVA versao da tupla (xmin = A)"]
+        PC --> PD["Versao antiga da linha X permanece\nvisivel para quem ja tinha snapshot anterior"]
+        PD --> PE["B le a linha X: enxerga a versao\ncompativel com o SEU snapshot, sem bloquear"]
+        PE --> PF{"B tambem tenta UPDATE\nna mesma linha X?"}
+        PF -->|"READ COMMITTED"| PG["B espera A commitar,\nentao aplica sobre a versao nova"]
+        PF -->|"SERIALIZABLE"| PH["B so descobre o conflito no COMMIT:\nSQLSTATE 40001, precisa retry"]
+        PG --> PI["VACUUM remove depois\nas versoes antigas (dead tuples)"]
+        PH --> PI
+    end
+
+    ORACLE -.->|"Estrategia oposta:\nbloqueia cedo, espera"| COMPARA["Locking = pessimista\n(assume conflito, trava antes)"]
+    POSTGRES -.->|"Estrategia oposta:\nnao bloqueia leitura"| COMPARB["MVCC = otimista para leitura\n(assume que nao vai conflitar)"]
