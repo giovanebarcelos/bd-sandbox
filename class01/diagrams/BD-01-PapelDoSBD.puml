@@ -1,0 +1,22 @@
+@startuml
+' Convertido de: BD-01-PapelDoSBD.mmd
+' Visualizar em: https://plantuml.com/
+
+' Original: flowchart TD
+
+:Usuario Final / Aplicacao Web-Mobile; --->> :Camada de Aplicacao;
+:Desenvolvedor; --->> A
+:DBA; --->> S
+A --->>|"SQL"| :SGBD;
+partition "S["SGBD (Oracle Database / PostgreSQL)"]" {
+direction TB
+:Processador de Consultas / Otimizador;
+:Gerenciador de Transacoes (ACID);
+:Controle de Concorrencia;
+:Dicionario de Dados / Catalogo;
+:Motor de Armazenamento;
+Q --->> T --->> C --->> E
+D --->- Q
+}
+E --->> :Armazenamento Fisico\nTablespaces / Arquivos de Dados;
+@enduml

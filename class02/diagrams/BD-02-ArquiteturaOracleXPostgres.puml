@@ -1,0 +1,42 @@
+@startuml
+' Convertido de: BD-02-ArquiteturaOracleXPostgres.mmd
+' Visualizar em: https://plantuml.com/
+
+' Original: flowchart LR
+
+partition "ORA["Oracle Database - Instance"]" {
+direction TB
+:Conexoes de Clientes; --->> :PGA\n(Program Global Area\nprivada por sessao);
+:SGA\n(System Global Area\ncompartilhada);
+ORA_SGA --->> :Database Buffer Cache;
+ORA_SGA --->> :Shared Pool;
+ORA_SGA --->> :Redo Log Buffer;
+ORA_PGA --->> ORA_SGA
+:Processos Background;
+ORA_BG --->> :PMON - Process Monitor;
+ORA_BG --->> :SMON - System Monitor;
+ORA_BG --->> :DBWn - Database Writer;
+ORA_BG --->> :LGWR - Log Writer;
+ORA_BG --->> :CKPT - Checkpoint;
+ORA_SGA --->> ORA_BG
+ORA_BG --->> :Datafiles / Redo Logs\n/ Control Files;
+}
+partition "PG["PostgreSQL - Cluster"]" {
+direction TB
+:Conexoes de Clientes; --->> :Processo Backend\n(1 por conexao);
+:postmaster\n(processo supervisor);
+PG_POST --->> PG_BACKEND
+:Shared Buffers\n(cache compartilhado);
+:WAL Buffers\n(Write-Ahead Log);
+PG_BACKEND --->> PG_SHARED
+PG_BACKEND --->> PG_WAL
+:Processos Auxiliares;
+PG_AUX --->> :bgwriter - Background Writer;
+PG_AUX --->> :walwriter - WAL Writer;
+PG_AUX --->> :autovacuum launcher;
+PG_AUX --->> :checkpointer;
+PG_POST --->> PG_AUX
+PG_SHARED --->> PG_AUX
+PG_AUX --->> :Data Files / WAL Segments\n/ pg_wal;
+}
+@enduml

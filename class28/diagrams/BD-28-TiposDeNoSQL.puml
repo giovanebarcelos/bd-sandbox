@@ -1,0 +1,23 @@
+@startuml
+' Convertido de: BD-28-TiposDeNoSQL.mmd
+' Visualizar em: https://plantuml.com/
+
+' Original: flowchart TD
+
+:NoSQL - Not Only SQL; --->> :Documento;
+N --->> :Chave-Valor;
+N --->> :Coluna / Wide-Column;
+N --->> :Grafo;
+D --->> :MongoDB;
+D --->> :Documentos JSON/BSON agrupados em colecoes;
+D --->> :Caso de uso: catalogos, conteudo semi-estruturado;
+KV --->> :Redis;
+KV --->> :Par chave --> valor opaco, acesso O(1);
+KV --->> :Caso de uso: cache, sessao, filas;
+CF --->> :Cassandra;
+CF --->> :Familias de colunas distribuidas por partition key;
+CF --->> :Caso de uso: series temporais, IoT, alta escrita;
+G --->> :Neo4j;
+G --->> :Nos, relacionamentos e propriedades;
+G --->> :Caso de uso: redes sociais, recomendacao, deteccao de fraude;
+@enduml

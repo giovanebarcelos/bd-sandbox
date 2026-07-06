@@ -1,0 +1,31 @@
+@startuml
+' Convertido de: BD-03-EcossistemaFerramentas.mmd
+' Visualizar em: https://plantuml.com/
+
+' Original: flowchart LR
+
+partition "OracleTools["Ferramentas Oracle"]" {
+:SQL Developer;
+:SQL*Plus (CLI);
+:Toad for Oracle;
+}
+partition "PgTools["Ferramentas PostgreSQL"]" {
+:DBeaver;
+:pgAdmin;
+:psql (CLI);
+:DataGrip;
+}
+partition "Docker["Ambiente Docker (docker compose)"]" {
+:Oracle XE\ncontainer :1521;
+:PostgreSQL\ncontainer :5432;
+}
+SQLDev --->> OraDB
+SQLPlus --->> OraDB
+Toad --->> OraDB
+DBeaver --->> PgDB
+PgAdmin --->> PgDB
+Psql --->> PgDB
+DataGrip --->> PgDB
+DBeaver -.-->|"tambem suporta"| OraDB
+DataGrip -.-->|"tambem suporta"| OraDB
+@enduml

@@ -1,0 +1,36 @@
+@startuml
+' Convertido de: BD-04-EntidadeRelacionamento.mmd
+' Visualizar em: https://plantuml.com/
+
+' ER Diagram - PlantUML nao suporta nativamente erDiagram
+' Use a sintaxe class ou object para representar entidades
+
+entity "CLIENTE ||--o" {
+entity "PEDIDO ||--|" {
+entity "PRODUTO ||--o" {
+entity "CLIENTE" {
+  cliente_id PK : int
+  nome : string
+  email UK : string
+  telefone : string
+}
+entity "PEDIDO" {
+  pedido_id PK : int
+  cliente_id FK : int
+  data_pedido : date
+  status : string
+}
+entity "PRODUTO" {
+  produto_id PK : int
+  nome : string
+  preco : decimal
+  estoque : int
+}
+entity "ITEM_PEDIDO" {
+  item_pedido_id PK : int
+  pedido_id FK : int
+  produto_id FK : int
+  quantidade : int
+  preco_unitario : decimal
+}
+@enduml

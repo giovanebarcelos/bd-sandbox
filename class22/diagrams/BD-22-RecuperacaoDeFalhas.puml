@@ -1,0 +1,35 @@
+@startuml
+' Convertido de: BD-22-RecuperacaoDeFalhas.mmd
+' Visualizar em: https://plantuml.com/
+
+' Original: flowchart TB
+
+partition "ORACLE["Oracle Database - Redo Log / Undo / Flashback"]" {
+direction TB
+:Transacao executa UPDATE/INSERT/DELETE; --->> :Undo segment guarda a\nversao ANTERIOR da linha\n(para rollback e read consistency);
+OA --->> :Redo log buffer registra a\nmudanca ANTES do COMMIT\n(write-ahead logging);
+OC --->> :LGWR grava o redo log buffer\nnos Online Redo Log files;
+OD --->> OE{"COMMIT confirmado?"}
+OE --->>|Sim| :Durabilidade garantida:\nredo persistido em disco;
+OE --->>|Nao / crash| :Instance recovery na proxima\ninicializacao: roll forward\ncom redo, depois roll back\ncom undo das transacoes abertas;
+OD --->> :ARCn arquiva os redo logs cheios\ncomo Archived Redo Logs;
+OH --->> :RMAN usa archived redo logs\npara recuperacao ponto-a-ponto;
+OF --->> :FLASHBACK QUERY: le o estado\npassado via undo (AS OF TIMESTAMP);
+OF --->> :FLASHBACK TABLE ... TO BEFORE DROP\n(recicla da Recycle Bin);
+OF --->> :FLASHBACK TABLE ... TO TIMESTAMP\n(reverte linhas via undo);
+}
+partition "POSTGRES["PostgreSQL - Write-Ahead Log (WAL)"]" {
+direction TB
+:Transacao executa UPDATE/INSERT/DELETE; --->> :Registro de WAL e escrito\nno WAL buffer ANTES da\nmudanca ser aplicada nas paginas;
+PB --->> :WAL writer grava o WAL buffer\nnos arquivos de pg_wal/;
+PC --->> PD{"COMMIT confirmado?"}
+PD --->>|Sim| :fsync do WAL garante\ndurabilidade (synchronous_commit);
+PD --->>|Nao / crash| :Crash recovery na proxima\ninicializacao: REDO a partir\ndo ultimo checkpoint, replay do WAL;
+PC --->> :archive_command copia os\nsegmentos de WAL para\narmazenamento de arquivamento;
+PG --->> :pg_basebackup + WAL archivado\npermitem Point-in-Time Recovery (PITR);
+PH --->> :recovery_target_time define\no instante exato de restauracao;
+PE --->> :pg_stat_wal / pg_stat_activity\nmonitoram atividade de WAL;
+}
+ORACLE -.-->|"Estrategia: undo + redo\nseparados, flashback logico"| :Recupera estado passado\nsem restaurar backup completo;
+POSTGRES -.-->|"Estrategia: WAL unico,\nreplay fisico de paginas"| :Recupera para ponto no tempo\nvia replay de WAL sobre backup base;
+@enduml

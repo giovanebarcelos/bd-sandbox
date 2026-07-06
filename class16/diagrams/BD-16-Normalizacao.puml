@@ -1,0 +1,29 @@
+@startuml
+' Convertido de: BD-16-Normalizacao.mmd
+' Visualizar em: https://plantuml.com/
+
+' Diagrama Mermaid original (conversao manual necessaria):
+' %% BD-16-Normalizacao.mmd
+' %% Aula 16 - UA6: Formas Normais (1FN, 2FN, 3FN, BCNF)
+' %% Decomposicao passo a passo do estudo de caso MATRICULA (aluno / curso / disciplina / professor)
+' 
+' flowchart TD
+'     U["MATRICULA nao normalizada (UNF)<br/>aluno_id, nome_aluno, cpf_aluno, curso_id, nome_curso,<br/>REPETE: disciplina_id, nome_disciplina, carga_horaria,<br/>professor_id, nome_professor, nota_final"]
+' 
+'     U -->|"1FN: elimina grupo repetitivo"| F1["MATRICULA (1FN)<br/>PK composta: aluno_id + disciplina_id<br/>todos os atributos em uma unica linha"]
+' 
+'     F1 -->|"2FN: elimina dependencia parcial"| F2A["ALUNO<br/>aluno_id, nome_aluno, cpf_aluno,<br/>curso_id, nome_curso"]
+'     F1 -->|"2FN"| F2B["DISCIPLINA<br/>disciplina_id, nome_disciplina,<br/>carga_horaria, professor_id, nome_professor"]
+'     F1 -->|"2FN"| F2C["MATRICULA_DISCIPLINA<br/>aluno_id, disciplina_id, nota_final"]
+' 
+'     F2A -->|"3FN: elimina transitiva curso_id -> nome_curso"| F3A["ALUNO<br/>aluno_id, nome_aluno, cpf_aluno, curso_id"]
+'     F2A --> F3B["CURSO<br/>curso_id, nome_curso"]
+' 
+'     F2B -->|"3FN: elimina transitiva professor_id -> nome_professor"| F3C["DISCIPLINA<br/>disciplina_id, nome_disciplina, carga_horaria, professor_id"]
+'     F2B --> F3D["PROFESSOR<br/>professor_id, nome_professor"]
+' 
+'     F2C --> F3E["MATRICULA_DISCIPLINA<br/>aluno_id, disciplina_id, nota_final"]
+' 
+'     F3D -->|"variante BCNF: professor leciona 1 disciplina"| BCNF1["PROF_DISCIPLINA<br/>professor_id, disciplina_id"]
+'     F3E -->|"BCNF"| BCNF2["ALUNO_PROFESSOR<br/>aluno_id, professor_id"]
+@enduml

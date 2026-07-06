@@ -1,0 +1,17 @@
+@startuml
+' Convertido de: BD-29-CapTheorem.mmd
+' Visualizar em: https://plantuml.com/
+
+' Original: flowchart TD
+
+:CAP Theorem<br/>Escolha 2 de 3 garantias<br/>quando a rede particiona;
+CAP --->- :Consistency (C)<br/>Toda leitura recebe<br/>a escrita mais recente<br/>ou um erro;
+CAP --->- :Availability (A)<br/>Toda requisicao recebe<br/>uma resposta (nao garante<br/>ser a mais recente);
+CAP --->- :Partition Tolerance (P)<br/>O sistema continua operando<br/>mesmo com falha de rede<br/>entre nos;
+C --->- :CA<br/>Consistente + Disponivel<br/>Só existe sem particao de rede<br/>Ex.: Oracle/PostgreSQL single-node;
+A --->- CA
+C --->- :CP<br/>Consistente + Tolerante a particao<br/>Sacrifica disponibilidade<br/>Ex.: MongoDB (config. padrao), HBase;
+P --->- CP
+A --->- :AP<br/>Disponivel + Tolerante a particao<br/>Sacrifica consistencia forte<br/>(consistencia eventual)<br/>Ex.: Cassandra, DynamoDB, CouchDB;
+P --->- AP
+@enduml

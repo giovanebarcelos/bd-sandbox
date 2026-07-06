@@ -1,0 +1,62 @@
+@startuml
+' Convertido de: BD-06-EscolaDeInformatica.mmd
+' Visualizar em: https://plantuml.com/
+
+' ER Diagram - PlantUML nao suporta nativamente erDiagram
+' Use a sintaxe class ou object para representar entidades
+
+entity "ALUNO" {
+  aluno_id PK "SERIAL" : int
+  data_matricula : date
+  nome : varchar
+  endereco : varchar
+  telefone : varchar
+  data_nascimento : date
+  altura : decimal
+  peso : decimal
+}
+entity "PROFESSOR" {
+  professor_id PK "SERIAL" : int
+  cpf UK : varchar
+  nome : varchar
+  data_nascimento : date
+  titulacao : varchar
+}
+entity "CURSO" {
+  curso_id PK "SERIAL" : int
+  nome : varchar
+}
+entity "TURMA" {
+  turma_id PK "SERIAL" : int
+  qtd_alunos : int
+  horario : time
+  duracao : int
+  data_inicial : date
+  data_final : date
+  professor_id FK : int
+  curso_id FK : int
+  alunomonitor_id FK : int
+}
+entity "TELEFONE" {
+  telefone_id PK "SERIAL" : int
+  numero : varchar
+  professor_id FK : int
+}
+entity "MATRICULA" {
+  matricula_id PK "SERIAL" : int
+  turma_id FK : int
+  aluno_id FK : int
+}
+entity "AUSENCIA" {
+  ausencia_id PK : int
+  matricula_id PK_FK : int
+  data : date
+}
+entity "PROFESSOR ||--o" {
+entity "PROFESSOR ||--o" {
+entity "CURSO ||--o" {
+entity "ALUNO ||--o" {
+entity "TURMA ||--o" {
+entity "MATRICULA ||--o" {
+' relationship: ALUNO ||--o| TURMA : monitora
+@enduml

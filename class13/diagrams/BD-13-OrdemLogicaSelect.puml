@@ -1,0 +1,12 @@
+@startuml
+' Convertido de: BD-13-OrdemLogicaSelect.mmd
+' Visualizar em: https://plantuml.com/
+
+' Original: flowchart LR
+
+A[FROM: origem das linhas] --->> B[WHERE: filtra linhas]
+B --->> C[GROUP BY: agrupa]
+C --->> D[HAVING: filtra grupos]
+D --->> E[SELECT: projeta colunas]
+E --->> F[ORDER BY: ordena o resultado]
+@enduml

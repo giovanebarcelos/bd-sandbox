@@ -1,0 +1,35 @@
+@startuml
+' Convertido de: BD-05-EspecializacaoGeneralizacao.mmd
+' Visualizar em: https://plantuml.com/
+
+' ER Diagram - PlantUML nao suporta nativamente erDiagram
+' Use a sintaxe class ou object para representar entidades
+
+' relationship: PESSOA ||--o| FUNCIONARIO : "e_um"
+' relationship: PESSOA ||--o| CLIENTE : "e_um"
+entity "FUNCIONARIO ||--o" {
+entity "PESSOA" {
+  pessoa_id PK : int
+  cpf UK : string
+  nome : string
+  data_nascimento : date
+}
+entity "FUNCIONARIO" {
+  pessoa_id PK : int
+  matricula_funcional UK : string
+  salario : decimal
+  data_admissao : date
+}
+entity "CLIENTE" {
+  pessoa_id PK : int
+  codigo_cliente UK : string
+  limite_credito : decimal
+}
+entity "DEPENDENTE" {
+  dependente_id PK : int
+  funcionario_id FK : int
+  nome : string
+  parentesco : string
+  data_nascimento : date
+}
+@enduml

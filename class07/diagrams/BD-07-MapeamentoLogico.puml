@@ -1,0 +1,58 @@
+@startuml
+' Convertido de: BD-07-MapeamentoLogico.mmd
+' Visualizar em: https://plantuml.com/
+
+' ER Diagram - PlantUML nao suporta nativamente erDiagram
+' Use a sintaxe class ou object para representar entidades
+
+entity "ALUNO ||--o" {
+entity "ALUNO ||--o" {
+' relationship: PROFESSOR |o--|| SALA : ocupa
+entity "PROFESSOR ||--o" {
+entity "DISCIPLINA ||--o" {
+entity "TURMA ||--o" {
+entity "ALUNO" {
+  matricula PK : int
+  nome : string
+  data_nascimento : date
+  email : string
+  endereco_rua : string
+  endereco_numero : string
+  endereco_cidade : string
+  endereco_uf : string
+}
+entity "ALUNO_TELEFONE" {
+  matricula PK,FK : int
+  telefone PK : string
+}
+entity "PROFESSOR" {
+  registro PK : int
+  nome : string
+  titulacao : string
+  sala_id FK : int
+}
+entity "SALA" {
+  id PK : int
+  bloco : string
+  capacidade : int
+}
+entity "DISCIPLINA" {
+  codigo PK : string
+  nome : string
+  carga_horaria : int
+}
+entity "TURMA" {
+  codigo_disciplina PK,FK : string
+  numero_turma PK : int
+  semestre : string
+  registro_professor FK : int
+}
+entity "MATRICULA" {
+  matricula_aluno PK,FK : int
+  codigo_disciplina PK,FK : string
+  numero_turma PK,FK : int
+  data_matricula : date
+  nota : decimal
+  situacao : string
+}
+@enduml

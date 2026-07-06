@@ -1,0 +1,30 @@
+@startuml
+' Convertido de: BD-27-DistribuicaoESharding.mmd
+' Visualizar em: https://plantuml.com/
+
+' Original: flowchart TB
+
+partition "ORACLE["Ecossistema Oracle - RAC + GoldenGate"]" {
+APP1[Aplicacao Cliente] --->> SCAN[SCAN Listener]
+SCAN --->> RAC1[Instancia RAC no 1]
+SCAN --->> RAC2[Instancia RAC no 2]
+SCAN --->> RAC3[Instancia RAC no 3]
+RAC1 --->- :Armazenamento Compartilhado - ASM;
+RAC2 --->- ASM
+RAC3 --->- ASM
+RAC1 -. GoldenGate: replicacao logica .--> :Site Remoto / DR;
+}
+partition "POSTGRES["Ecossistema PostgreSQL - Streaming + Citus + Particionamento"]" {
+APP2[Aplicacao Cliente] --->> LB[Load Balancer / Pgpool / Patroni]
+LB --->> :Primario;
+PRIMARY ---> streaming sincrona --->> :Standby Sincrono;
+PRIMARY ---> streaming assincrona --->> :Standby Assincrono - leitura;
+PRIMARY --->> COORD[Coordenador Citus]
+COORD --->> :Worker - Shard 1;
+COORD --->> :Worker - Shard 2;
+COORD --->> :Worker - Shard 3;
+WORKER1 -. tabela particionada por RANGE/LIST/HASH .--> :Particao 2025;
+WORKER1 -. . --> :Particao 2026;
+}
+ORACLE -. mesma decisao arquitetural, ferramentas distintas .--> POSTGRES
+@enduml
