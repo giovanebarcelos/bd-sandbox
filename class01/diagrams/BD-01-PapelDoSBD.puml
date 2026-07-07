@@ -1,22 +1,36 @@
 @startuml
-' Convertido de: BD-01-PapelDoSBD.mmd
+' BD-01-PapelDoSBD.puml
 ' Visualizar em: https://plantuml.com/
 
-' Original: flowchart TD
-
-:Usuario Final / Aplicacao Web-Mobile; --->> :Camada de Aplicacao;
-:Desenvolvedor; --->> A
-:DBA; --->> S
-A --->>|"SQL"| :SGBD;
-partition "S["SGBD (Oracle Database / PostgreSQL)"]" {
-direction TB
-:Processador de Consultas / Otimizador;
-:Gerenciador de Transacoes (ACID);
-:Controle de Concorrencia;
-:Dicionario de Dados / Catalogo;
-:Motor de Armazenamento;
-Q --->> T --->> C --->> E
-D --->- Q
+skinparam rectangle {
+  BackgroundColor #F0F4F8
+  BorderColor #2563EB
 }
-E --->> :Armazenamento Fisico\nTablespaces / Arquivos de Dados;
+
+actor "Usuário Final /\nAplicação Web-Mobile" as USER
+actor "Desenvolvedor" as DEV
+actor "DBA" as DBA
+
+rectangle "Camada de Aplicação" as APP
+
+package "SGBD (Oracle Database / PostgreSQL)" as SGBD {
+  rectangle "Processador de Consultas /\nOtimizador" as OTIM
+  rectangle "Gerenciador de Transações (ACID)" as TRANS
+  rectangle "Controle de Concorrência" as CONC
+  rectangle "Dicionário de Dados / Catálogo" as CAT
+  rectangle "Motor de Armazenamento" as ENGINE
+
+  OTIM --> TRANS
+  TRANS --> CONC
+  CONC --> CAT
+  CAT --> ENGINE
+}
+
+database "Armazenamento Físico\nTablespaces / Arquivos de Dados" as STORAGE
+
+USER --> APP
+DEV --> APP : escreve
+DBA --> SGBD : administra
+APP --> SGBD : SQL
+ENGINE --> STORAGE
 @enduml

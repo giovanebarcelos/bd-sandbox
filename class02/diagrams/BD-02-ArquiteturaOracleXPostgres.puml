@@ -1,42 +1,64 @@
 @startuml
-' Convertido de: BD-02-ArquiteturaOracleXPostgres.mmd
+' BD-02-ArquiteturaOracleXPostgres.puml
 ' Visualizar em: https://plantuml.com/
 
-' Original: flowchart LR
-
-partition "ORA["Oracle Database - Instance"]" {
-direction TB
-:Conexoes de Clientes; --->> :PGA\n(Program Global Area\nprivada por sessao);
-:SGA\n(System Global Area\ncompartilhada);
-ORA_SGA --->> :Database Buffer Cache;
-ORA_SGA --->> :Shared Pool;
-ORA_SGA --->> :Redo Log Buffer;
-ORA_PGA --->> ORA_SGA
-:Processos Background;
-ORA_BG --->> :PMON - Process Monitor;
-ORA_BG --->> :SMON - System Monitor;
-ORA_BG --->> :DBWn - Database Writer;
-ORA_BG --->> :LGWR - Log Writer;
-ORA_BG --->> :CKPT - Checkpoint;
-ORA_SGA --->> ORA_BG
-ORA_BG --->> :Datafiles / Redo Logs\n/ Control Files;
+skinparam rectangle {
+  BackgroundColor #F0F4F8
+  BorderColor #2563EB
 }
-partition "PG["PostgreSQL - Cluster"]" {
-direction TB
-:Conexoes de Clientes; --->> :Processo Backend\n(1 por conexao);
-:postmaster\n(processo supervisor);
-PG_POST --->> PG_BACKEND
-:Shared Buffers\n(cache compartilhado);
-:WAL Buffers\n(Write-Ahead Log);
-PG_BACKEND --->> PG_SHARED
-PG_BACKEND --->> PG_WAL
-:Processos Auxiliares;
-PG_AUX --->> :bgwriter - Background Writer;
-PG_AUX --->> :walwriter - WAL Writer;
-PG_AUX --->> :autovacuum launcher;
-PG_AUX --->> :checkpointer;
-PG_POST --->> PG_AUX
-PG_SHARED --->> PG_AUX
-PG_AUX --->> :Data Files / WAL Segments\n/ pg_wal;
+
+package "Oracle Database — Instance" as ORA {
+  rectangle "Conexões de Clientes" as ORA_CONN
+  rectangle "PGA\n(Program Global Area\nprivada por sessão)" as ORA_PGA
+  rectangle "SGA\n(System Global Area\ncompartilhada)" as ORA_SGA
+  rectangle "Database Buffer Cache" as ORA_DBC
+  rectangle "Shared Pool" as ORA_SP
+  rectangle "Redo Log Buffer" as ORA_RLB
+  rectangle "Processos Background" as ORA_BG
+  rectangle "PMON — Process Monitor" as ORA_PMON
+  rectangle "SMON — System Monitor" as ORA_SMON
+  rectangle "DBWn — Database Writer" as ORA_DBWN
+  rectangle "LGWR — Log Writer" as ORA_LGWR
+  rectangle "CKPT — Checkpoint" as ORA_CKPT
+  database "Datafiles / Redo Logs\n/ Control Files" as ORA_FILES
+
+  ORA_CONN --> ORA_PGA
+  ORA_PGA --> ORA_SGA
+  ORA_SGA --> ORA_DBC
+  ORA_SGA --> ORA_SP
+  ORA_SGA --> ORA_RLB
+  ORA_SGA --> ORA_BG
+  ORA_BG --> ORA_PMON
+  ORA_BG --> ORA_SMON
+  ORA_BG --> ORA_DBWN
+  ORA_BG --> ORA_LGWR
+  ORA_BG --> ORA_CKPT
+  ORA_BG --> ORA_FILES
+}
+
+package "PostgreSQL — Cluster" as PG {
+  rectangle "Conexões de Clientes" as PG_CONN
+  rectangle "Processo Backend\n(1 por conexão)" as PG_BACKEND
+  rectangle "postmaster\n(processo supervisor)" as PG_POST
+  rectangle "Shared Buffers\n(cache compartilhado)" as PG_SHARED
+  rectangle "WAL Buffers\n(Write-Ahead Log)" as PG_WAL
+  rectangle "Processos Auxiliares" as PG_AUX
+  rectangle "bgwriter — Background Writer" as PG_BGW
+  rectangle "walwriter — WAL Writer" as PG_WALW
+  rectangle "autovacuum launcher" as PG_AUTOV
+  rectangle "checkpointer" as PG_CKPT
+  database "Data Files / WAL Segments\n/ pg_wal" as PG_FILES
+
+  PG_CONN --> PG_BACKEND
+  PG_POST --> PG_BACKEND
+  PG_BACKEND --> PG_SHARED
+  PG_BACKEND --> PG_WAL
+  PG_POST --> PG_AUX
+  PG_SHARED --> PG_AUX
+  PG_AUX --> PG_BGW
+  PG_AUX --> PG_WALW
+  PG_AUX --> PG_AUTOV
+  PG_AUX --> PG_CKPT
+  PG_AUX --> PG_FILES
 }
 @enduml

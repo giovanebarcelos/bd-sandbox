@@ -1,33 +1,55 @@
 @startuml
-' Convertido de: BD-21-MvccXLocking.mmd
+' BD-21-MvccXLocking.puml
 ' Visualizar em: https://plantuml.com/
 
-' Original: flowchart TB
+skinparam rectangle {
+  BackgroundColor #F0F4F8
+  BorderColor #2563EB
+}
 
-partition "ORACLE["Oracle Database - Locking Pessimista"]" {
-direction TB
-:Transacao A: SELECT ... FOR UPDATE na linha X; --->> :Linha X recebe lock exclusivo;
-OB --->> OC{"Transacao B tambem\npede lock na linha X?"}
-OC --->>|Sim| :B fica bloqueada (blocking)\nate A executar COMMIT/ROLLBACK;
-OC --->>|Nao| :B segue livre em outras linhas;
-OD --->> :A executa COMMIT: libera o lock;
-OF --->> :B eh liberada e prossegue\ncom dados ja atualizados;
-OG --->> OH{"Ordem cruzada de locks\nentre A e B?"}
-OH --->>|Sim| :Oracle detecta deadlock\nORA-00060: aborta uma transacao;
-OH --->>|Nao| :Execucao serializada, sem conflito;
+package "Oracle Database — Locking Pessimista" as ORACLE {
+  rectangle "Transação A: SELECT ... FOR UPDATE\nna linha X" as OA
+  rectangle "Linha X recebe lock exclusivo" as OB
+  rectangle "Transação B também\npede lock na linha X?" as OC
+  rectangle "B fica bloqueada (blocking)\naté A executar COMMIT/ROLLBACK" as OD1
+  rectangle "B segue livre em outras linhas" as OD2
+  rectangle "A executa COMMIT: libera o lock" as OE
+  rectangle "B é liberada e prossegue\ncom dados já atualizados" as OF
+  rectangle "Ordem cruzada de locks\nentre A e B?" as OG
+  rectangle "Oracle detecta deadlock\nORA-00060: aborta uma transação" as OH1
+  rectangle "Execução serializada, sem conflito" as OH2
+
+  OA --> OB
+  OB --> OC
+  OC --> OD1 : sim
+  OC --> OD2 : não
+  OD1 --> OE
+  OE --> OF
+  OF --> OG
+  OG --> OH1 : sim
+  OG --> OH2 : não
 }
-partition "POSTGRES["PostgreSQL - MVCC (Multi-Version Concurrency Control)"]" {
-direction TB
-:Transacao A inicia: recebe snapshot proprio; --->> :Transacao B inicia: recebe snapshot proprio;
-PB --->> :A executa UPDATE na linha X:\ncria NOVA versao da tupla (xmin = A);
-PC --->> :Versao antiga da linha X permanece\nvisivel para quem ja tinha snapshot anterior;
-PD --->> :B le a linha X: enxerga a versao\ncompativel com o SEU snapshot, sem bloquear;
-PE --->> PF{"B tambem tenta UPDATE\nna mesma linha X?"}
-PF --->>|"READ COMMITTED"| :B espera A commitar,\nentao aplica sobre a versao nova;
-PF --->>|"SERIALIZABLE"| :B so descobre o conflito no COMMIT:\nSQLSTATE 40001, precisa retry;
-PG --->> :VACUUM remove depois\nas versoes antigas (dead tuples);
-PH --->> PI
+
+package "PostgreSQL — MVCC (Multi-Version Concurrency Control)" as POSTGRES {
+  rectangle "Transação A inicia:\nrecebe snapshot próprio" as PA
+  rectangle "Transação B inicia:\nrecebe snapshot próprio" as PB
+  rectangle "A executa UPDATE na linha X:\ncria NOVA versão da tupla (xmin = A)" as PC
+  rectangle "Versão antiga da linha X permanece\nvisível para quem já tinha snapshot anterior" as PD
+  rectangle "B lê a linha X: enxerga a versão\ncompatível com o SEU snapshot, sem bloquear" as PE
+  rectangle "B também tenta UPDATE\nna mesma linha X?" as PF
+  rectangle "READ COMMITTED: B espera A commitar,\nentão aplica sobre a versão nova" as PG1
+  rectangle "SERIALIZABLE: B só descobre o conflito\nno COMMIT: SQLSTATE 40001, precisa retry" as PG2
+  rectangle "VACUUM remove depois\nas versões antigas (dead tuples)" as PH
+
+  PA --> PB
+  PB --> PC
+  PC --> PD
+  PD --> PE
+  PE --> PF
+  PF --> PG1 : READ COMMITTED
+  PF --> PG2 : SERIALIZABLE
+  PG1 --> PH
 }
-ORACLE -.-->|"Estrategia oposta:\nbloqueia cedo, espera"| :Locking = pessimista\n(assume conflito, trava antes);
-POSTGRES -.-->|"Estrategia oposta:\nnao bloqueia leitura"| :MVCC = otimista para leitura\n(assume que nao vai conflitar);
+
+ORACLE .[#EA580C].> POSTGRES : Estratégia oposta:\nlocking pessimista bloqueia cedo e espera;\nMVCC é otimista para leitura
 @enduml

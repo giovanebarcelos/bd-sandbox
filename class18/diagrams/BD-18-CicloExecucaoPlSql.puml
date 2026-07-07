@@ -1,15 +1,17 @@
 @startuml
-' Convertido de: BD-18-CicloExecucaoPlSql.mmd
+' BD-18-CicloExecucaoPlSql.puml
 ' Visualizar em: https://plantuml.com/
 
-' Original: flowchart TD
-
-:Chamada do bloco/procedure/function; --->> :Secao DECLARE (opcional): variaveis, %TYPE, %ROWTYPE, cursores;
-B --->> :Secao BEGIN: comandos SQL e PL/SQL executados em sequencia;
-C --->> D{"Ocorreu erro?"}
-D ---> "Nao" --->> :COMMIT implicito/explicito das alteracoes;
-D ---> "Sim" --->> :Secao EXCEPTION: WHEN excecao_especifica / WHEN OTHERS;
-F --->> :ROLLBACK ou ROLLBACK TO SAVEPOINT;
-E --->> :END - controle retorna ao chamador;
-G --->> H
+start
+:Chamada do bloco/procedure/function;
+:Seção DECLARE (opcional): variáveis,\n%TYPE, %ROWTYPE, cursores;
+:Seção BEGIN: comandos SQL e PL/SQL\nexecutados em sequência;
+if (Ocorreu erro?) then (não)
+  :COMMIT implícito/explícito das alterações;
+else (sim)
+  :Seção EXCEPTION: WHEN exceção_específica\n/ WHEN OTHERS;
+  :ROLLBACK ou ROLLBACK TO SAVEPOINT;
+endif
+:END — controle retorna ao chamador;
+stop
 @enduml

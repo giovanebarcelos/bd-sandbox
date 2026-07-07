@@ -1,15 +1,17 @@
 @startuml
-' Convertido de: BD-19-CicloExecucaoPlPgSql.mmd
+' BD-19-CicloExecucaoPlPgSql.puml
 ' Visualizar em: https://plantuml.com/
 
-' Original: flowchart TD
-
-:Chamada: SELECT funcao(...) ou CALL procedure(...); --->> :DECLARE (opcional): variaveis, %TYPE, %ROWTYPE, RECORD;
-B --->> :BEGIN: comandos SQL e PL/pgSQL executados em sequencia;
-C --->> D{"Ocorreu erro?"}
-D ---> "Nao" --->> :Function: RETURN valor / RETURN QUERY | Procedure: COMMIT (se aplicavel);
-D ---> "Sim" --->> :EXCEPTION WHEN condicao / WHEN OTHERS;
-F --->> :RAISE NOTICE / RAISE EXCEPTION + ROLLBACK (em procedure);
-E --->> :END - controle retorna ao chamador;
-G --->> H
+start
+:Chamada: SELECT função(...) ou CALL procedure(...);
+:DECLARE (opcional): variáveis,\n%TYPE, %ROWTYPE, RECORD;
+:BEGIN: comandos SQL e PL/pgSQL\nexecutados em sequência;
+if (Ocorreu erro?) then (não)
+  :Function: RETURN valor / RETURN QUERY\nProcedure: COMMIT (se aplicável);
+else (sim)
+  :EXCEPTION WHEN condição / WHEN OTHERS;
+  :RAISE NOTICE / RAISE EXCEPTION\n+ ROLLBACK (em procedure);
+endif
+:END — controle retorna ao chamador;
+stop
 @enduml

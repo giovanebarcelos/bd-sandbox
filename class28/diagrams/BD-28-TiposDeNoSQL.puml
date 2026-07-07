@@ -1,23 +1,53 @@
 @startuml
-' Convertido de: BD-28-TiposDeNoSQL.mmd
+' BD-28-TiposDeNoSQL.puml
 ' Visualizar em: https://plantuml.com/
 
-' Original: flowchart TD
+skinparam rectangle {
+  BackgroundColor #F0F4F8
+  BorderColor #2563EB
+}
 
-:NoSQL - Not Only SQL; --->> :Documento;
-N --->> :Chave-Valor;
-N --->> :Coluna / Wide-Column;
-N --->> :Grafo;
-D --->> :MongoDB;
-D --->> :Documentos JSON/BSON agrupados em colecoes;
-D --->> :Caso de uso: catalogos, conteudo semi-estruturado;
-KV --->> :Redis;
-KV --->> :Par chave --> valor opaco, acesso O(1);
-KV --->> :Caso de uso: cache, sessao, filas;
-CF --->> :Cassandra;
-CF --->> :Familias de colunas distribuidas por partition key;
-CF --->> :Caso de uso: series temporais, IoT, alta escrita;
-G --->> :Neo4j;
-G --->> :Nos, relacionamentos e propriedades;
-G --->> :Caso de uso: redes sociais, recomendacao, deteccao de fraude;
+rectangle "NoSQL — Not Only SQL" as N
+
+rectangle "Documento" as D
+rectangle "Chave-Valor" as KV
+rectangle "Coluna / Wide-Column" as CF
+rectangle "Grafo" as G
+
+rectangle "MongoDB" as MONGO
+rectangle "Documentos JSON/BSON\nagrupados em coleções" as D_DESC
+rectangle "Caso de uso: catálogos,\nconteúdo semi-estruturado" as D_USE
+
+rectangle "Redis" as REDIS
+rectangle "Par chave -> valor opaco,\nacesso O(1)" as KV_DESC
+rectangle "Caso de uso: cache, sessão, filas" as KV_USE
+
+rectangle "Cassandra" as CASSANDRA
+rectangle "Famílias de colunas distribuídas\npor partition key" as CF_DESC
+rectangle "Caso de uso: séries temporais,\nIoT, alta escrita" as CF_USE
+
+rectangle "Neo4j" as NEO4J
+rectangle "Nós, relacionamentos e propriedades" as G_DESC
+rectangle "Caso de uso: redes sociais,\nrecomendação, detecção de fraude" as G_USE
+
+N --> D
+N --> KV
+N --> CF
+N --> G
+
+D --> MONGO
+D --> D_DESC
+D --> D_USE
+
+KV --> REDIS
+KV --> KV_DESC
+KV --> KV_USE
+
+CF --> CASSANDRA
+CF --> CF_DESC
+CF --> CF_USE
+
+G --> NEO4J
+G --> G_DESC
+G --> G_USE
 @enduml

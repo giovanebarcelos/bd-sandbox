@@ -1,14 +1,18 @@
 @startuml
-' Convertido de: BD-12-FluxoUpsert.mmd
+' BD-12-FluxoUpsert.puml
 ' Visualizar em: https://plantuml.com/
 
-' Original: flowchart TD
-
-A[Feed do fornecedor chega em LivroEstoqueStaging] --->> B{livro_id ja existe em Estoque?}
-B ---> Sim --->> C[UPDATE: atualiza quantidade_disponivel e ultima_atualizacao]
-B ---> Nao --->> D[INSERT: cria nova linha em Estoque]
-C --->> E[Estoque sincronizado]
-D --->> E
-E --->> :Oracle: um unico comando MERGE resolve C e D;
-E --->> :PostgreSQL: um unico comando INSERT ... ON CONFLICT resolve C e D;
+start
+:Feed do fornecedor chega em LivroEstoqueStaging;
+if (livro_id já existe em Estoque?) then (sim)
+  :UPDATE: atualiza quantidade_disponivel\ne ultima_atualizacao;
+else (não)
+  :INSERT: cria nova linha em Estoque;
+endif
+:Estoque sincronizado;
+note right
+  Oracle: um único comando MERGE resolve as duas situações
+  PostgreSQL: um único comando INSERT ... ON CONFLICT resolve as duas situações
+end note
+stop
 @enduml

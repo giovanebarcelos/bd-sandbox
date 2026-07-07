@@ -1,31 +1,37 @@
 @startuml
-' Convertido de: BD-03-EcossistemaFerramentas.mmd
+' BD-03-EcossistemaFerramentas.puml
 ' Visualizar em: https://plantuml.com/
 
-' Original: flowchart LR
+skinparam rectangle {
+  BackgroundColor #F0F4F8
+  BorderColor #2563EB
+}
 
-partition "OracleTools["Ferramentas Oracle"]" {
-:SQL Developer;
-:SQL*Plus (CLI);
-:Toad for Oracle;
+package "Ferramentas Oracle" as OracleTools {
+  rectangle "SQL Developer" as SQLDev
+  rectangle "SQL*Plus (CLI)" as SQLPlus
+  rectangle "Toad for Oracle" as Toad
 }
-partition "PgTools["Ferramentas PostgreSQL"]" {
-:DBeaver;
-:pgAdmin;
-:psql (CLI);
-:DataGrip;
+
+package "Ferramentas PostgreSQL" as PgTools {
+  rectangle "DBeaver" as DBeaver
+  rectangle "pgAdmin" as PgAdmin
+  rectangle "psql (CLI)" as Psql
+  rectangle "DataGrip" as DataGrip
 }
-partition "Docker["Ambiente Docker (docker compose)"]" {
-:Oracle XE\ncontainer :1521;
-:PostgreSQL\ncontainer :5432;
+
+package "Ambiente Docker (docker compose)" as Docker {
+  database "Oracle XE\ncontainer :1521" as OraDB
+  database "PostgreSQL\ncontainer :5432" as PgDB
 }
-SQLDev --->> OraDB
-SQLPlus --->> OraDB
-Toad --->> OraDB
-DBeaver --->> PgDB
-PgAdmin --->> PgDB
-Psql --->> PgDB
-DataGrip --->> PgDB
-DBeaver -.-->|"tambem suporta"| OraDB
-DataGrip -.-->|"tambem suporta"| OraDB
+
+SQLDev --> OraDB
+SQLPlus --> OraDB
+Toad --> OraDB
+DBeaver --> PgDB
+PgAdmin --> PgDB
+Psql --> PgDB
+DataGrip --> PgDB
+DBeaver ..> OraDB : também suporta
+DataGrip ..> OraDB : também suporta
 @enduml

@@ -1,17 +1,30 @@
 @startuml
-' Convertido de: BD-29-CapTheorem.mmd
+' BD-29-CapTheorem.puml
 ' Visualizar em: https://plantuml.com/
 
-' Original: flowchart TD
+skinparam rectangle {
+  BackgroundColor #F0F4F8
+  BorderColor #2563EB
+}
 
-:CAP Theorem<br/>Escolha 2 de 3 garantias<br/>quando a rede particiona;
-CAP --->- :Consistency (C)<br/>Toda leitura recebe<br/>a escrita mais recente<br/>ou um erro;
-CAP --->- :Availability (A)<br/>Toda requisicao recebe<br/>uma resposta (nao garante<br/>ser a mais recente);
-CAP --->- :Partition Tolerance (P)<br/>O sistema continua operando<br/>mesmo com falha de rede<br/>entre nos;
-C --->- :CA<br/>Consistente + Disponivel<br/>Só existe sem particao de rede<br/>Ex.: Oracle/PostgreSQL single-node;
-A --->- CA
-C --->- :CP<br/>Consistente + Tolerante a particao<br/>Sacrifica disponibilidade<br/>Ex.: MongoDB (config. padrao), HBase;
-P --->- CP
-A --->- :AP<br/>Disponivel + Tolerante a particao<br/>Sacrifica consistencia forte<br/>(consistencia eventual)<br/>Ex.: Cassandra, DynamoDB, CouchDB;
-P --->- AP
+rectangle "CAP Theorem\nEscolha 2 de 3 garantias\nquando a rede particiona" as CAP
+
+rectangle "Consistency (C)\nToda leitura recebe\na escrita mais recente\nou um erro" as C
+rectangle "Availability (A)\nToda requisição recebe\numa resposta (não garante\nser a mais recente)" as A
+rectangle "Partition Tolerance (P)\nO sistema continua operando\nmesmo com falha de rede\nentre nós" as P
+
+rectangle "CA\nConsistente + Disponível\nSó existe sem partição de rede\nEx.: Oracle/PostgreSQL single-node" as CA
+rectangle "CP\nConsistente + Tolerante a partição\nSacrifica disponibilidade\nEx.: MongoDB (config. padrão), HBase" as CP
+rectangle "AP\nDisponível + Tolerante a partição\nSacrifica consistência forte\n(consistência eventual)\nEx.: Cassandra, DynamoDB, CouchDB" as AP
+
+CAP --> C
+CAP --> A
+CAP --> P
+
+C --> CA
+A --> CA
+C --> CP
+P --> CP
+A --> AP
+P --> AP
 @enduml

@@ -1,35 +1,61 @@
 @startuml
-' Convertido de: BD-22-RecuperacaoDeFalhas.mmd
+' BD-22-RecuperacaoDeFalhas.puml
 ' Visualizar em: https://plantuml.com/
 
-' Original: flowchart TB
+skinparam rectangle {
+  BackgroundColor #F0F4F8
+  BorderColor #2563EB
+}
 
-partition "ORACLE["Oracle Database - Redo Log / Undo / Flashback"]" {
-direction TB
-:Transacao executa UPDATE/INSERT/DELETE; --->> :Undo segment guarda a\nversao ANTERIOR da linha\n(para rollback e read consistency);
-OA --->> :Redo log buffer registra a\nmudanca ANTES do COMMIT\n(write-ahead logging);
-OC --->> :LGWR grava o redo log buffer\nnos Online Redo Log files;
-OD --->> OE{"COMMIT confirmado?"}
-OE --->>|Sim| :Durabilidade garantida:\nredo persistido em disco;
-OE --->>|Nao / crash| :Instance recovery na proxima\ninicializacao: roll forward\ncom redo, depois roll back\ncom undo das transacoes abertas;
-OD --->> :ARCn arquiva os redo logs cheios\ncomo Archived Redo Logs;
-OH --->> :RMAN usa archived redo logs\npara recuperacao ponto-a-ponto;
-OF --->> :FLASHBACK QUERY: le o estado\npassado via undo (AS OF TIMESTAMP);
-OF --->> :FLASHBACK TABLE ... TO BEFORE DROP\n(recicla da Recycle Bin);
-OF --->> :FLASHBACK TABLE ... TO TIMESTAMP\n(reverte linhas via undo);
+package "Oracle Database — Redo Log / Undo / Flashback" as ORACLE {
+  rectangle "Transação executa UPDATE/INSERT/DELETE" as OA
+  rectangle "Undo segment guarda a versão ANTERIOR\nda linha (para rollback e read consistency)" as OB
+  rectangle "Redo log buffer registra a mudança\nANTES do COMMIT (write-ahead logging)" as OC
+  rectangle "LGWR grava o redo log buffer\nnos Online Redo Log files" as OD
+  rectangle "COMMIT confirmado?" as OE
+  rectangle "Durabilidade garantida:\nredo persistido em disco" as OF1
+  rectangle "Instance recovery na próxima inicialização:\nroll forward com redo, depois roll back\ncom undo das transações abertas" as OF2
+  rectangle "ARCn arquiva os redo logs cheios\ncomo Archived Redo Logs" as OG
+  rectangle "RMAN usa archived redo logs\npara recuperação ponto-a-ponto" as OH
+  rectangle "FLASHBACK QUERY: lê o estado\npassado via undo (AS OF TIMESTAMP)" as OI1
+  rectangle "FLASHBACK TABLE ... TO BEFORE DROP\n(recicla da Recycle Bin)" as OI2
+  rectangle "FLASHBACK TABLE ... TO TIMESTAMP\n(reverte linhas via undo)" as OI3
+
+  OA --> OB
+  OA --> OC
+  OC --> OD
+  OD --> OE
+  OE --> OF1 : sim
+  OE --> OF2 : não / crash
+  OD --> OG
+  OG --> OH
+  OB --> OI1
+  OB --> OI2
+  OB --> OI3
 }
-partition "POSTGRES["PostgreSQL - Write-Ahead Log (WAL)"]" {
-direction TB
-:Transacao executa UPDATE/INSERT/DELETE; --->> :Registro de WAL e escrito\nno WAL buffer ANTES da\nmudanca ser aplicada nas paginas;
-PB --->> :WAL writer grava o WAL buffer\nnos arquivos de pg_wal/;
-PC --->> PD{"COMMIT confirmado?"}
-PD --->>|Sim| :fsync do WAL garante\ndurabilidade (synchronous_commit);
-PD --->>|Nao / crash| :Crash recovery na proxima\ninicializacao: REDO a partir\ndo ultimo checkpoint, replay do WAL;
-PC --->> :archive_command copia os\nsegmentos de WAL para\narmazenamento de arquivamento;
-PG --->> :pg_basebackup + WAL archivado\npermitem Point-in-Time Recovery (PITR);
-PH --->> :recovery_target_time define\no instante exato de restauracao;
-PE --->> :pg_stat_wal / pg_stat_activity\nmonitoram atividade de WAL;
+
+package "PostgreSQL — Write-Ahead Log (WAL)" as POSTGRES {
+  rectangle "Transação executa UPDATE/INSERT/DELETE" as PA
+  rectangle "Registro de WAL é escrito no WAL buffer\nANTES da mudança ser aplicada nas páginas" as PB
+  rectangle "WAL writer grava o WAL buffer\nnos arquivos de pg_wal/" as PC
+  rectangle "COMMIT confirmado?" as PD
+  rectangle "fsync do WAL garante durabilidade\n(synchronous_commit)" as PE1
+  rectangle "Crash recovery na próxima inicialização:\nREDO a partir do último checkpoint,\nreplay do WAL" as PE2
+  rectangle "archive_command copia os segmentos\nde WAL para armazenamento de arquivamento" as PF
+  rectangle "pg_basebackup + WAL arquivado\npermitem Point-in-Time Recovery (PITR)" as PG
+  rectangle "recovery_target_time define\no instante exato de restauração" as PH
+  rectangle "pg_stat_wal / pg_stat_activity\nmonitoram atividade de WAL" as PI
+
+  PA --> PB
+  PB --> PC
+  PC --> PD
+  PD --> PE1 : sim
+  PD --> PE2 : não / crash
+  PC --> PF
+  PF --> PG
+  PG --> PH
+  PC --> PI
 }
-ORACLE -.-->|"Estrategia: undo + redo\nseparados, flashback logico"| :Recupera estado passado\nsem restaurar backup completo;
-POSTGRES -.-->|"Estrategia: WAL unico,\nreplay fisico de paginas"| :Recupera para ponto no tempo\nvia replay de WAL sobre backup base;
+
+ORACLE .[#EA580C].> POSTGRES : Oracle: undo + redo separados,\nflashback lógico | PostgreSQL: WAL único,\nreplay físico de páginas
 @enduml

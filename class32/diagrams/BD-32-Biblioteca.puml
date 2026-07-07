@@ -1,0 +1,49 @@
+@startuml
+' BD-32-Biblioteca.puml
+' DER do Projeto Integrador Final — Sistema de Biblioteca Universitária
+' Visualizar em: https://plantuml.com/
+
+entity "EDITORA" {
+  editora_id PK : number
+  nome : varchar
+}
+entity "LIVRO" {
+  livro_id PK : number
+  isbn UK : varchar
+  titulo : varchar
+  editora_id FK : number
+  ano : number
+  edicao : number
+}
+entity "AUTOR" {
+  autor_id PK : number
+  nome : varchar
+  nacionalidade : varchar
+}
+entity "LIVRO_AUTOR" {
+  livro_id PK_FK : number
+  autor_id PK_FK : number
+}
+entity "USUARIO" {
+  usuario_id PK : number
+  matricula UK : varchar
+  nome : varchar
+  email UK : varchar
+  tipo : varchar
+}
+entity "EMPRESTIMO" {
+  emprestimo_id PK : number
+  usuario_id FK : number
+  livro_id FK : number
+  data_retirada : date
+  data_prevista : date
+  data_devolucao : date
+  multa : number
+}
+
+EDITORA ||--o{ LIVRO : publica
+LIVRO ||--o{ LIVRO_AUTOR : possui
+AUTOR ||--o{ LIVRO_AUTOR : escreve
+USUARIO ||--o{ EMPRESTIMO : realiza
+LIVRO ||--o{ EMPRESTIMO : e_emprestado
+@enduml

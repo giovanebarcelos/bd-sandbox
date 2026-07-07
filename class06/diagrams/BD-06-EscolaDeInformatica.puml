@@ -52,11 +52,11 @@ entity "AUSENCIA" {
   matricula_id PK_FK : int
   data : date
 }
-entity "PROFESSOR ||--o" {
-entity "PROFESSOR ||--o" {
-entity "CURSO ||--o" {
-entity "ALUNO ||--o" {
-entity "TURMA ||--o" {
-entity "MATRICULA ||--o" {
-' relationship: ALUNO ||--o| TURMA : monitora
+PROFESSOR ||--o{ TURMA : leciona
+CURSO ||--o{ TURMA : oferece
+ALUNO ||--o{ MATRICULA : realiza
+TURMA ||--o{ MATRICULA : recebe
+PROFESSOR ||--o{ TELEFONE : possui
+MATRICULA ||--o{ AUSENCIA : registra
+ALUNO }o..o| TURMA : monitora
 @enduml
