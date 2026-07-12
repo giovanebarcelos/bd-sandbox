@@ -2,15 +2,8 @@
 ' Convertido de: BD-07-MapeamentoLogico.mmd
 ' Visualizar em: https://plantuml.com/
 
-' ER Diagram - PlantUML nao suporta nativamente erDiagram
-' Use a sintaxe class ou object para representar entidades
+' ER Diagram - notacao Crow's Foot (entity + relacionamentos)
 
-entity "ALUNO ||--o" {
-entity "ALUNO ||--o" {
-' relationship: PROFESSOR |o--|| SALA : ocupa
-entity "PROFESSOR ||--o" {
-entity "DISCIPLINA ||--o" {
-entity "TURMA ||--o" {
 entity "ALUNO" {
   matricula PK : int
   nome : string
@@ -55,4 +48,10 @@ entity "MATRICULA" {
   nota : decimal
   situacao : string
 }
+ALUNO ||--o{ ALUNO_TELEFONE : possui
+ALUNO ||--o{ MATRICULA : realiza
+PROFESSOR |o--|| SALA : ocupa
+PROFESSOR ||--o{ TURMA : leciona
+DISCIPLINA ||--o{ TURMA : origina
+TURMA ||--o{ MATRICULA : recebe
 @enduml

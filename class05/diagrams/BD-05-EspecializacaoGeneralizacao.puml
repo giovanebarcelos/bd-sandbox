@@ -2,12 +2,9 @@
 ' Convertido de: BD-05-EspecializacaoGeneralizacao.mmd
 ' Visualizar em: https://plantuml.com/
 
-' ER Diagram - PlantUML nao suporta nativamente erDiagram
-' Use a sintaxe class ou object para representar entidades
+' ER Diagram - notacao Crow's Foot (entity + relacionamentos)
+' PESSOA e a super-entidade; FUNCIONARIO e CLIENTE sao especializacoes.
 
-' relationship: PESSOA ||--o| FUNCIONARIO : "e_um"
-' relationship: PESSOA ||--o| CLIENTE : "e_um"
-entity "FUNCIONARIO ||--o" {
 entity "PESSOA" {
   pessoa_id PK : int
   cpf UK : string
@@ -32,4 +29,7 @@ entity "DEPENDENTE" {
   parentesco : string
   data_nascimento : date
 }
+PESSOA ||--o| FUNCIONARIO : e_um
+PESSOA ||--o| CLIENTE : e_um
+FUNCIONARIO ||--o{ DEPENDENTE : possui
 @enduml

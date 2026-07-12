@@ -2,12 +2,8 @@
 ' Convertido de: BD-04-EntidadeRelacionamento.mmd
 ' Visualizar em: https://plantuml.com/
 
-' ER Diagram - PlantUML nao suporta nativamente erDiagram
-' Use a sintaxe class ou object para representar entidades
+' ER Diagram - notacao Crow's Foot (entity + relacionamentos)
 
-entity "CLIENTE ||--o" {
-entity "PEDIDO ||--|" {
-entity "PRODUTO ||--o" {
 entity "CLIENTE" {
   cliente_id PK : int
   nome : string
@@ -33,4 +29,7 @@ entity "ITEM_PEDIDO" {
   quantidade : int
   preco_unitario : decimal
 }
+CLIENTE ||--o{ PEDIDO : realiza
+PEDIDO ||--|{ ITEM_PEDIDO : contem
+PRODUTO ||--o{ ITEM_PEDIDO : compoe
 @enduml
