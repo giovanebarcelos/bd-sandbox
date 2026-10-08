@@ -1,0 +1,6 @@
+# Aula 28 - drivers Python dos 4 bancos NoSQL
+#   pip install -r requirements.txt
+pymongo>=4.8
+redis>=5.0
+neo4j>=5.20
+cassandra-driver>=3.29

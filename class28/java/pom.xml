@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Aula 28 - Banco de Dados - exemplos Java para Neo4j e Cassandra
+  Prof. Giovane Barcelos
+
+  Este pom serve apenas para BAIXAR os drivers. Os exemplos sao arquivos
+  unicos (convencao BDNNYY-Nome.java do curso), compilados com javac:
+
+    mvn -q dependency:copy-dependencies
+    javac -cp "target/dependency/*" -d target BD2805-Neo4jAntifraude.java
+    java  -cp "target:target/dependency/*" BD2805Neo4jAntifraude
+
+    javac -cp "target/dependency/*" -d target BD2806-CassandraTelemetria.java
+    java  -cp "target:target/dependency/*" BD2806CassandraTelemetria
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>br.edu.bd</groupId>
+  <artifactId>bd-class28-nosql</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.neo4j.driver</groupId>
+      <artifactId>neo4j-java-driver</artifactId>
+      <version>5.28.5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>java-driver-core</artifactId>
+      <version>4.19.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+      <version>1.7.36</version>
+    </dependency>
+  </dependencies>
+</project>

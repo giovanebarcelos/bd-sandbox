@@ -1,0 +1,52 @@
+# ============================================================================
+# BD2804 - Roteiro de comandos redis-cli (Aula 28B - Redis em Profundidade)
+# Prof. Giovane Barcelos
+#
+# Execucao (linha a linha, interativo):  docker exec -it bd28-redis redis-cli
+# Execucao (arquivo inteiro):            docker exec -i bd28-redis redis-cli < BD2804-ComandosRedisCli.redis
+# ============================================================================
+FLUSHDB
+# --- String: cache com TTL
+SET produto:1 "{\"nome\":\"Notebook Pro 14\",\"preco\":7899.90}" EX 60
+GET produto:1
+TTL produto:1
+# --- String como contador atomico
+INCR acessos:produto:1
+INCRBY acessos:produto:1 10
+# --- Hash: sessao do usuario
+HSET sessao:abc123 usuario ana nome "Ana Ribeiro" perfil cliente
+HGETALL sessao:abc123
+EXPIRE sessao:abc123 1800
+# --- List: fila simples (FIFO com LPUSH + RPOP)
+LPUSH fila:emails "pedido 1001" "pedido 1002" "pedido 1003"
+RPOP fila:emails
+LRANGE fila:emails 0 -1
+# --- Set: tags e operacoes de conjunto
+SADD tags:produto:1 ultrafino trabalho ssd
+SADD tags:produto:2 gamer ssd rtx
+SINTER tags:produto:1 tags:produto:2
+SUNION tags:produto:1 tags:produto:2
+# --- Sorted Set: ranking
+ZADD ranking:vendas 12 "Fone Bluetooth" 7 "Smartphone Z5" 1 "Notebook Pro 14"
+ZINCRBY ranking:vendas 5 "Notebook Pro 14"
+ZREVRANGE ranking:vendas 0 2 WITHSCORES
+# --- HyperLogLog: contagem aproximada de unicos
+PFADD visitantes:hoje ana bruno carla ana ana bruno
+PFCOUNT visitantes:hoje
+# --- Stream: log de eventos com consumer group
+XADD pedidos:novos * pedido_id 1001 total 299.00
+XADD pedidos:novos * pedido_id 1002 total 7899.90
+XGROUP CREATE pedidos:novos faturamento 0
+XREADGROUP GROUP faturamento worker-1 COUNT 10 STREAMS pedidos:novos >
+XPENDING pedidos:novos faturamento
+# --- Lock distribuido (so cria se nao existir, expira em 5 s)
+SET lock:produto:4 token-xyz NX PX 5000
+SET lock:produto:4 token-abc NX PX 5000
+# --- Transacao MULTI/EXEC
+MULTI
+DECR estoque:produto:4
+RPUSH log:vendas "produto 4 vendido"
+EXEC
+# --- Introspeccao
+KEYS *
+INFO memory

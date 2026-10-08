@@ -20,7 +20,8 @@ classNN/
 ## Tecnologias Utilizadas
 
 - **SGBDs:** Oracle Database XE, PostgreSQL
-- **Linguagens de aplicação:** Java 17+ (JDBC), Python 3.11+ (`oracledb`, `psycopg2`)
+- **NoSQL (Aula 28):** MongoDB 7, Redis 7, Neo4j 5, Apache Cassandra 4.1
+- **Linguagens de aplicação:** Java 17+ (JDBC, drivers Neo4j/Cassandra), Python 3.11+ (`oracledb`, `psycopg2`, `pymongo`, `redis`, `neo4j`, `cassandra-driver`), JavaScript/Node.js 18+ (`mongodb`, `redis`)
 - **Diagramas:** PlantUML — visualizar em https://plantuml.com/
 - **Infraestrutura:** Docker / Docker Compose
 
@@ -55,7 +56,7 @@ classNN/
 | 25 | UA9 | Otimização e tuning | — | ✓ | ✓ | — | — |
 | 26 | UA10 | Backup e recuperação | — | ✓ | ✓ | — | — |
 | 27 | UA10 | Distribuição, replicação e sharding | ✓ | — | — | — | — |
-| 28 | UA11 | NoSQL: documento/chave-valor/coluna/grafo | — | — | — | — | ✓ |
+| 28 | UA11 | NoSQL: documento/chave-valor/coluna/grafo + MongoDB, Redis, Neo4j e Cassandra em profundidade (28A-28D) | — | — | — | ✓ | ✓ |
 | 29 | UA11 | Big Data e CAP theorem | ✓ | — | — | — | — |
 | 30 | UA12 | Conexões: JDBC e DB-API | — | ✓ | ✓ | ✓ | ✓ |
 | 31 | UA12 | Segurança: usuários, roles e grants | — | ✓ | ✓ | — | — |
@@ -74,6 +75,24 @@ e as credenciais do seu ambiente.
 **Python:** exemplos usam `oracledb` (Oracle) e `psycopg2` (PostgreSQL); instale as
 dependências com `pip install oracledb psycopg2-binary` e ajuste as credenciais de
 conexão no início de cada script.
+
+**NoSQL (Aula 28 e 28A-28D):** a pasta `class28/` contém, além de `python/` e `java/`:
+
+```
+class28/
+├── docker/docker-compose.yml   # MongoDB (replica set), Redis, Neo4j e Cassandra
+├── python/requirements.txt     # pip install -r requirements.txt
+├── javascript/package.json     # npm install (MongoDB e Redis em Node.js)
+├── java/pom.xml                # mvn -q dependency:copy-dependencies (Neo4j e Cassandra)
+├── mongodb/  redis/  neo4j/  cassandra/   # roteiros de shell (mongosh, redis-cli, Cypher, CQL)
+```
+
+| Script | Banco | Problema real |
+|---|---|---|
+| `BD2803-MongoLojaVirtual.py` / `BD2803-MongoApiLoja.js` | MongoDB | catálogo heterogêneo e checkout transacional |
+| `BD2804-RedisBlackFriday.py` / `BD2804-RedisRateLimiterFila.js` | Redis | cache, sessão, rate limit, ranking, fila e lock |
+| `BD2805-Neo4jFraudeRecomendacao.py` / `BD2805-Neo4jAntifraude.java` | Neo4j | anéis de fraude e recomendação |
+| `BD2806-CassandraColdChain.py` / `BD2806-CassandraTelemetria.java` | Cassandra | telemetria de caminhões refrigerados |
 
 ## Licença
 

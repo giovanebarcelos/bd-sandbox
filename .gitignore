@@ -17,3 +17,7 @@ Thumbs.db
 *.tmp
 *.swp
 *~
+
+# Dependencias/artefatos de build (Node e Maven)
+node_modules/
+target/

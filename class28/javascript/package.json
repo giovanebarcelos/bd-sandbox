@@ -1,0 +1,17 @@
+{
+  "name": "bd-class28-nosql",
+  "version": "1.0.0",
+  "description": "Exemplos em Node.js da Aula 28 (MongoDB e Redis) - Banco de Dados - Prof. Giovane Barcelos",
+  "private": true,
+  "scripts": {
+    "mongo": "node BD2803-MongoApiLoja.js --teste",
+    "redis": "node BD2804-RedisRateLimiterFila.js"
+  },
+  "dependencies": {
+    "mongodb": "^6.8.0",
+    "redis": "^4.7.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

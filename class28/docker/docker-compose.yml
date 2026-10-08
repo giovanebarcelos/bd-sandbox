@@ -1,0 +1,66 @@
+# ============================================================================
+# Aula 28 - Laboratorio NoSQL: MongoDB, Redis, Neo4j e Cassandra
+# Disciplina: Banco de Dados | Prof. Giovane Barcelos
+#
+#   docker compose up -d          # sobe os 4 bancos
+#   docker compose ps             # aguarde todos "healthy" (Cassandra ~60-90 s)
+#   docker compose down -v        # derruba e apaga os volumes
+#
+# Memoria recomendada: 4 GB livres (Cassandra e Neo4j sao JVM).
+# ============================================================================
+services:
+  mongo:
+    image: mongo:7
+    container_name: bd28-mongo
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports: ["27017:27017"]
+    volumes: ["mongo-dados:/data/db"]
+    healthcheck:
+      # inicia o replica set de 1 no na primeira vez (necessario p/ transacoes)
+      test: >
+        mongosh --quiet --eval
+        "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}).ok }"
+      interval: 10s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: bd28-redis
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb",
+              "--maxmemory-policy", "allkeys-lru"]
+    ports: ["6379:6379"]
+    volumes: ["redis-dados:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+
+  neo4j:
+    image: neo4j:5
+    container_name: bd28-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/bd28senha123
+    ports: ["7474:7474", "7687:7687"]
+    volumes: ["neo4j-dados:/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 10s
+      retries: 12
+
+  cassandra:
+    image: cassandra:4.1
+    container_name: bd28-cassandra
+    environment:
+      MAX_HEAP_SIZE: 1G
+      HEAP_NEWSIZE: 200M
+    ports: ["9042:9042"]
+    volumes: ["cassandra-dados:/var/lib/cassandra"]
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces' || exit 1"]
+      interval: 15s
+      retries: 12
+
+volumes:
+  mongo-dados:
+  redis-dados:
+  neo4j-dados:
+  cassandra-dados:
