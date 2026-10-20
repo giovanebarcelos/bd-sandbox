@@ -99,7 +99,7 @@ db.produtos.createIndex({ tags: 1 }, { name: "ix_tags_multikey" });
 db.produtos.createIndex({ nome: "text", tags: "text" }, { default_language: "portuguese", name: "ix_texto" });
 print(`Carga: ${db.produtos.countDocuments()} produtos, ${db.clientes.countDocuments()} clientes, ${db.pedidos.countDocuments()} pedidos`);
 
-// --- 1. CRUD do Slide 14 (SQL x mongosh)
+// --- 1. CRUD do Slide 16 (SQL x mongosh)
 db.produtos.insertOne({ sku: "TST-0001", nome: "Produto Teste", categoria: "livro", preco: 10.0, estoque: 0 });
 db.produtos.find({ categoria: "livro" }, { _id: 0, nome: 1, preco: 1 });
 db.produtos.find({}, { _id: 0, nome: 1, preco: 1 }).sort({ preco: -1 }).limit(5);
@@ -127,7 +127,7 @@ db.produtos.countDocuments({ estoque: 0 });
 // --- 3. UPDATE
 db.produtos.updateOne({ sku: "SMA-0002" }, { $set: { estoque: 15 }, $currentDate: { atualizado_em: true } });
 db.produtos.updateMany({ categoria: "smartphone" }, { $addToSet: { tags: "promocao" } });
-db.produtos.updateOne({ sku: "SMA-0002" }, { $set: { estoque: 0 } });   // volta a 0: a API (Slide 28) testa o 422 nele
+db.produtos.updateOne({ sku: "SMA-0002" }, { $set: { estoque: 0 } });   // volta a 0: a API (Slide 30) testa o 422 nele
 
 // --- 4. AGGREGATE: ticket medio por cliente
 db.pedidos.aggregate([
