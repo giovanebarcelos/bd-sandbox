@@ -26,9 +26,9 @@
  *   Linux/macOS: MONGO_USER=aluno MONGO_PASS=s3nh4 node BD2803-MongoApiLoja.js
  *   URI completa: MONGO_URI="mongodb://admin:mongodb@localhost:27017/" node BD2803-MongoApiLoja.js
  *
- * Transacoes: com replica set, POST /pedidos usa withTransaction; com um no
- * avulso (standalone, ex.: container "mongodb" do curso) usa baixa condicional
- * + compensacao - o resultado final e o mesmo.
+ * Transacoes: com replica set (container "mongodb" do curso ou "bd28-mongo"),
+ * POST /pedidos usa withTransaction; com um no avulso (standalone, ex.: compose
+ * antigo do curso) usa baixa condicional + compensacao - o resultado e o mesmo.
  */
 
 const http = require("node:http");

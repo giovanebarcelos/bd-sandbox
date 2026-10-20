@@ -23,8 +23,11 @@ Pre-requisitos:
     winget install -e --id Python.Python.3.12      # Windows (Linux/macOS: ja vem)
     pip install pymongo                            # ou: pip install -r requirements.txt
     MongoDB rodando em localhost:27017 - qualquer um dos dois serve:
-      a) container "mongodb" do curso (usuario admin / senha mongodb, sem replica set)
+      a) container "mongodb" do curso (A1/Ferramentas/Docker: usuario admin / senha
+         mongodb, replica set rs0 iniciado pelo healthcheck do compose)
       b) container "bd28-mongo" da Aula 28 (class28/docker, replica set rs0, sem senha)
+      c) qualquer MongoDB standalone (ex.: compose antigo do curso) - tambem funciona
+    MongoBooster/Compass: mongodb://admin:mongodb@localhost:27017/?authSource=admin&directConnection=true
 
 Execucao (usuario/senha por parametro ou por variavel de ambiente):
     python BD2803-MongoLojaVirtual.py                               # admin / mongodb
