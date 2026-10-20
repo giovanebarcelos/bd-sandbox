@@ -14,23 +14,47 @@
  *   GET  /relatorios/categorias
  *
  * Pre-requisitos:
+ *   winget install -e --id OpenJS.NodeJS.LTS   (Windows; Node >= 18)
  *   npm install            (usa o package.json desta pasta)
- *   MongoDB em replica set e base populada (rode antes o BD2803 em Python)
+ *   Base populada: rode antes o BD2803 em Python ou o BD2803-ConsultasMongosh.js
  *
- * Execucao:
+ * Execucao (usuario/senha por variavel de ambiente; padrao admin / mongodb):
  *   node BD2803-MongoApiLoja.js          # sobe a API na porta 3000
  *   node BD2803-MongoApiLoja.js --teste  # sobe, faz chamadas de teste e encerra
+ *   node BD2803-MongoApiLoja.js --teste --sem-auth          # container bd28-mongo
+ *   PowerShell:  $env:MONGO_USER="aluno"; $env:MONGO_PASS="s3nh4"; node BD2803-MongoApiLoja.js
+ *   Linux/macOS: MONGO_USER=aluno MONGO_PASS=s3nh4 node BD2803-MongoApiLoja.js
+ *   URI completa: MONGO_URI="mongodb://admin:mongodb@localhost:27017/" node BD2803-MongoApiLoja.js
+ *
+ * Transacoes: com replica set, POST /pedidos usa withTransaction; com um no
+ * avulso (standalone, ex.: container "mongodb" do curso) usa baixa condicional
+ * + compensacao - o resultado final e o mesmo.
  */
 
 const http = require("node:http");
 const { MongoClient } = require("mongodb");
 
-const MONGO_URI = "mongodb://localhost:27017/?replicaSet=rs0&directConnection=true";
+const HOST = process.env.MONGO_HOST || "localhost";
+const PORTA_MONGO = process.env.MONGO_PORT || "27017";
+const USUARIO = process.env.MONGO_USER ?? "admin";
+const SENHA = process.env.MONGO_PASS ?? "mongodb";
 const PORTA = 3000;
 const TAMANHO_PAGINA = 3;
 
-const cliente = new MongoClient(MONGO_URI, { serverSelectionTimeoutMS: 5000 });
+// directConnection: fala direto com o no informado, sem exigir o nome do
+// replica set (rs0) na URI - funciona com standalone e com replica set.
+function montarUri() {
+  if (process.env.MONGO_URI) return process.env.MONGO_URI;
+  if (process.argv.includes("--sem-auth") || !USUARIO) {
+    return `mongodb://${HOST}:${PORTA_MONGO}/?directConnection=true`;
+  }
+  return `mongodb://${encodeURIComponent(USUARIO)}:${encodeURIComponent(SENHA)}` +
+    `@${HOST}:${PORTA_MONGO}/?authSource=admin&directConnection=true`;
+}
+
+const cliente = new MongoClient(montarUri(), { serverSelectionTimeoutMS: 5000 });
 const db = cliente.db("techstore");
+let usarTransacao = true; // definido em main() conforme o servidor
 
 // ---------------------------------------------------------------------------
 // Regras de negocio (camada de acesso a dados)
@@ -60,39 +84,56 @@ async function buscaTextual(q) {
     .toArray();
 }
 
-async function criarPedido({ clienteId, itens }) {
+// Baixa o estoque e grava o pedido (usado com e sem transacao)
+async function registrarPedido({ clienteId, itens }, sessao, baixados) {
+  const linhas = [];
+  let total = 0;
+  for (const { sku, qtd } of itens) {
+    const produto = await db.collection("produtos").findOneAndUpdate(
+      { sku, estoque: { $gte: qtd } },
+      { $inc: { estoque: -qtd } },
+      { session: sessao, returnDocument: "after", projection: { _id: 0, nome: 1, preco: 1 } }
+    );
+    if (!produto) throw new Error(`Estoque insuficiente para ${sku}`);
+    baixados?.push({ sku, qtd });
+    const subtotal = Math.round(produto.preco * qtd * 100) / 100;
+    total += subtotal;
+    linhas.push({ sku, nome: produto.nome, qtd, preco_unit: produto.preco, subtotal });
+  }
+  const cli = await db.collection("clientes").findOne({ _id: clienteId }, { session: sessao });
+  if (!cli) throw new Error(`Cliente ${clienteId} inexistente`);
+  const { insertedId } = await db.collection("pedidos").insertOne(
+    {
+      cliente_id: clienteId,
+      entrega: cli.endereco,
+      itens: linhas,
+      total: Math.round(total * 100) / 100,
+      status: "PAGO",
+      criado_em: new Date(),
+    },
+    { session: sessao }
+  );
+  return { pedidoId: insertedId, total: Math.round(total * 100) / 100 };
+}
+
+async function criarPedido(pedido) {
+  if (!usarTransacao) {
+    // Standalone: cada $inc condicional e atomico (sem overselling); se um
+    // item falhar, devolve ao estoque o que ja foi baixado (compensacao)
+    const baixados = [];
+    try {
+      return await registrarPedido(pedido, undefined, baixados);
+    } catch (erro) {
+      for (const { sku, qtd } of baixados) {
+        await db.collection("produtos").updateOne({ sku }, { $inc: { estoque: qtd } });
+      }
+      throw erro;
+    }
+  }
   const sessao = cliente.startSession();
   try {
     // withTransaction repete automaticamente em caso de erro transitorio
-    return await sessao.withTransaction(async () => {
-      const linhas = [];
-      let total = 0;
-      for (const { sku, qtd } of itens) {
-        const produto = await db.collection("produtos").findOneAndUpdate(
-          { sku, estoque: { $gte: qtd } },
-          { $inc: { estoque: -qtd } },
-          { session: sessao, returnDocument: "after", projection: { _id: 0, nome: 1, preco: 1 } }
-        );
-        if (!produto) throw new Error(`Estoque insuficiente para ${sku}`);
-        const subtotal = Math.round(produto.preco * qtd * 100) / 100;
-        total += subtotal;
-        linhas.push({ sku, nome: produto.nome, qtd, preco_unit: produto.preco, subtotal });
-      }
-      const cli = await db.collection("clientes").findOne({ _id: clienteId }, { session: sessao });
-      if (!cli) throw new Error(`Cliente ${clienteId} inexistente`);
-      const { insertedId } = await db.collection("pedidos").insertOne(
-        {
-          cliente_id: clienteId,
-          entrega: cli.endereco,
-          itens: linhas,
-          total: Math.round(total * 100) / 100,
-          status: "PAGO",
-          criado_em: new Date(),
-        },
-        { session: sessao }
-      );
-      return { pedidoId: insertedId, total: Math.round(total * 100) / 100 };
-    });
+    return await sessao.withTransaction(() => registrarPedido(pedido, sessao));
   } finally {
     await sessao.endSession();
   }
@@ -180,8 +221,12 @@ async function chamadasDeTeste() {
 
 async function main() {
   await cliente.connect();
+  // Transacoes multi-documento exigem replica set (ou sharding)
+  const hello = await cliente.db("admin").command({ hello: 1 });
+  usarTransacao = Boolean(hello.setName) || hello.msg === "isdbgrid";
   servidor.listen(PORTA, async () => {
-    console.log(`API TechStore ouvindo em http://localhost:${PORTA}`);
+    console.log(`API TechStore ouvindo em http://localhost:${PORTA} | transacoes: ` +
+      (usarTransacao ? "SIM (replica set)" : "NAO (standalone) -> compensacao"));
     if (process.argv.includes("--teste")) {
       await chamadasDeTeste();
       servidor.close();

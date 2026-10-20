@@ -20,22 +20,65 @@ O script resolve, passo a passo:
     7. Atualizacoes atomicas em arrays ($push com $slice, $inc, arrayFilters)
 
 Pre-requisitos:
-    pip install pymongo
-    # Transacoes exigem replica set (mesmo que de um no so):
-    docker run -d --name bd28-mongo -p 27017:27017 mongo:7 --replSet rs0
-    docker exec bd28-mongo mongosh --quiet --eval "rs.initiate()"
+    winget install -e --id Python.Python.3.12      # Windows (Linux/macOS: ja vem)
+    pip install pymongo                            # ou: pip install -r requirements.txt
+    MongoDB rodando em localhost:27017 - qualquer um dos dois serve:
+      a) container "mongodb" do curso (usuario admin / senha mongodb, sem replica set)
+      b) container "bd28-mongo" da Aula 28 (class28/docker, replica set rs0, sem senha)
 
-Execucao:
-    python3 BD2803-MongoLojaVirtual.py
+Execucao (usuario/senha por parametro ou por variavel de ambiente):
+    python BD2803-MongoLojaVirtual.py                               # admin / mongodb
+    python BD2803-MongoLojaVirtual.py --usuario aluno --senha s3nh4
+    python BD2803-MongoLojaVirtual.py --sem-auth                    # bd28-mongo
+    python BD2803-MongoLojaVirtual.py --uri "mongodb://admin:mongodb@localhost:27017/"
+    # PowerShell: $env:MONGO_USER="admin"; $env:MONGO_PASS="mongodb"
+    # Linux/macOS: MONGO_USER=admin MONGO_PASS=mongodb python3 BD2803-MongoLojaVirtual.py
+
+Transacoes: o script descobre sozinho se o servidor e um replica set. Se for,
+o checkout usa transacao multi-documento; se for um no avulso (standalone),
+usa baixa condicional + compensacao - o resultado final e o mesmo.
 """
 
+import argparse
+import os
 from datetime import datetime, timedelta, timezone
+from urllib.parse import quote_plus
 
 from pymongo import ASCENDING, DESCENDING, TEXT, MongoClient, ReturnDocument
 from pymongo.errors import OperationFailure, PyMongoError, WriteError
 
-MONGO_URI = "mongodb://localhost:27017/?replicaSet=rs0&directConnection=true"
 NOME_BANCO = "techstore"
+
+
+def ler_parametros():
+    """Conexao configuravel: argumento > variavel de ambiente > padrao do curso."""
+    ap = argparse.ArgumentParser(description="TechStore - MongoDB na pratica")
+    ap.add_argument("--host", default=os.getenv("MONGO_HOST", "localhost"))
+    ap.add_argument("--porta", type=int, default=int(os.getenv("MONGO_PORT", "27017")))
+    ap.add_argument("--usuario", default=os.getenv("MONGO_USER", "admin"))
+    ap.add_argument("--senha", default=os.getenv("MONGO_PASS", "mongodb"))
+    ap.add_argument("--sem-auth", action="store_true",
+                    help="conecta sem usuario/senha (ex.: container bd28-mongo)")
+    ap.add_argument("--uri", default=os.getenv("MONGO_URI"),
+                    help="URI completa; ignora host/porta/usuario/senha")
+    return ap.parse_args()
+
+
+def montar_uri(args):
+    if args.uri:
+        return args.uri
+    # directConnection: fala direto com o no informado, sem exigir o nome do
+    # replica set (rs0) na URI - funciona com standalone e com replica set.
+    if args.sem_auth or not args.usuario:
+        return f"mongodb://{args.host}:{args.porta}/?directConnection=true"
+    return (f"mongodb://{quote_plus(args.usuario)}:{quote_plus(args.senha)}"
+            f"@{args.host}:{args.porta}/?authSource=admin&directConnection=true")
+
+
+def suporta_transacoes(cliente):
+    """Transacoes multi-documento exigem replica set (ou sharding)."""
+    hello = cliente.admin.command("hello")
+    return "setName" in hello or hello.get("msg") == "isdbgrid"
 
 
 def titulo(texto):
@@ -190,7 +233,40 @@ class EstoqueInsuficiente(Exception):
     pass
 
 
-def checkout(cliente_mongo, db, cliente_id, itens):
+def registrar_pedido(db, cliente_id, itens, sessao=None, baixados=None):
+    """Baixa o estoque de cada item e grava o pedido (usado pelos 2 modos)."""
+    linhas, total = [], 0.0
+    for sku, qtd in itens:
+        # Baixa condicional: so decrementa se houver estoque suficiente
+        produto = db.produtos.find_one_and_update(
+            {"sku": sku, "estoque": {"$gte": qtd}},
+            {"$inc": {"estoque": -qtd}},
+            projection={"_id": 0, "sku": 1, "nome": 1, "preco": 1},
+            return_document=ReturnDocument.AFTER,
+            session=sessao,
+        )
+        if produto is None:
+            raise EstoqueInsuficiente(f"sem estoque para {sku} (qtd {qtd})")
+        if baixados is not None:
+            baixados.append((sku, qtd))
+        subtotal = round(produto["preco"] * qtd, 2)
+        total += subtotal
+        # Snapshot do nome/preco: o pedido guarda o preco DO MOMENTO da compra
+        linhas.append({"sku": sku, "nome": produto["nome"], "qtd": qtd,
+                       "preco_unit": produto["preco"], "subtotal": subtotal})
+    cliente = db.clientes.find_one({"_id": cliente_id}, session=sessao)
+    pedido = {
+        "cliente_id": cliente_id,
+        "entrega": cliente["endereco"],      # copia do endereco (historico)
+        "itens": linhas,                      # array embutido
+        "total": round(total, 2),
+        "status": "PAGO",
+        "criado_em": datetime.now(timezone.utc),
+    }
+    return db.pedidos.insert_one(pedido, session=sessao).inserted_id
+
+
+def checkout(cliente_mongo, db, cliente_id, itens, usar_transacao=True):
     """Cria um pedido baixando o estoque de cada item - tudo ou nada.
 
     itens: lista de (sku, quantidade)
@@ -200,39 +276,25 @@ def checkout(cliente_mongo, db, cliente_id, itens):
     O MongoDB (>= 4.0) oferece transacoes ACID multi-documento com a mesma
     semantica - mas o ideal e modelar para nao precisar delas sempre.
     """
-    with cliente_mongo.start_session() as sessao:
-        with sessao.start_transaction():
-            linhas, total = [], 0.0
-            for sku, qtd in itens:
-                # Baixa condicional: so decrementa se houver estoque suficiente
-                produto = db.produtos.find_one_and_update(
-                    {"sku": sku, "estoque": {"$gte": qtd}},
-                    {"$inc": {"estoque": -qtd}},
-                    projection={"_id": 0, "sku": 1, "nome": 1, "preco": 1},
-                    return_document=ReturnDocument.AFTER,
-                    session=sessao,
-                )
-                if produto is None:
-                    # Excecao dentro do 'with' => abort_transaction automatico
-                    raise EstoqueInsuficiente(f"sem estoque para {sku} (qtd {qtd})")
-                subtotal = round(produto["preco"] * qtd, 2)
-                total += subtotal
-                # Snapshot do nome/preco: o pedido guarda o preco DO MOMENTO da compra
-                linhas.append({"sku": sku, "nome": produto["nome"], "qtd": qtd,
-                               "preco_unit": produto["preco"], "subtotal": subtotal})
-            cliente = db.clientes.find_one({"_id": cliente_id}, session=sessao)
-            pedido = {
-                "cliente_id": cliente_id,
-                "entrega": cliente["endereco"],      # copia do endereco (historico)
-                "itens": linhas,                      # array embutido
-                "total": round(total, 2),
-                "status": "PAGO",
-                "criado_em": datetime.now(timezone.utc),
-            }
-            return db.pedidos.insert_one(pedido, session=sessao).inserted_id
+    if usar_transacao:
+        with cliente_mongo.start_session() as sessao:
+            with sessao.start_transaction():
+                # Excecao dentro do 'with' => abort_transaction automatico
+                return registrar_pedido(db, cliente_id, itens, sessao)
+
+    # Standalone (sem replica set): cada $inc condicional continua atomico,
+    # entao nunca ha overselling; se um item falhar, devolvemos ao estoque o
+    # que ja foi baixado (transacao de compensacao, como no padrao Saga).
+    baixados = []
+    try:
+        return registrar_pedido(db, cliente_id, itens, baixados=baixados)
+    except Exception:
+        for sku, qtd in baixados:
+            db.produtos.update_one({"sku": sku}, {"$inc": {"estoque": qtd}})
+        raise
 
 
-def simular_vendas(cliente_mongo, db):
+def simular_vendas(cliente_mongo, db, usar_transacao):
     compras = [
         ("cli-ana", [("NTB-0001", 1), ("LIV-0001", 2)]),
         ("cli-bruno", [("SMA-0001", 2)]),
@@ -242,10 +304,11 @@ def simular_vendas(cliente_mongo, db):
     ]
     for cliente_id, itens in compras:
         try:
-            pid = checkout(cliente_mongo, db, cliente_id, itens)
+            pid = checkout(cliente_mongo, db, cliente_id, itens, usar_transacao)
             print(f"Pedido {pid} criado para {cliente_id}")
         except EstoqueInsuficiente as erro:
-            print(f"Pedido de {cliente_id} ABORTADO (rollback): {erro}")
+            modo = "rollback" if usar_transacao else "compensacao"
+            print(f"Pedido de {cliente_id} ABORTADO ({modo}): {erro}")
     est = db.produtos.find_one({"sku": "NTB-0002"}, {"_id": 0, "estoque": 1})
     print("Estoque final de NTB-0002 (esperado 1):", est["estoque"])
 
@@ -348,10 +411,15 @@ def avaliacoes_e_precos(db):
 
 
 def main():
+    args = ler_parametros()
     try:
-        cliente = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        cliente = MongoClient(montar_uri(args), serverSelectionTimeoutMS=5000)
         cliente.admin.command("ping")
         db = cliente[NOME_BANCO]
+        usar_transacao = suporta_transacoes(cliente)
+        print("Conectado em", f"{args.host}:{args.porta}", "| transacoes:",
+              "SIM (replica set)" if usar_transacao
+              else "NAO (standalone) -> checkout com compensacao")
 
         titulo("PASSO 1 - Colecoes e validacao de esquema")
         criar_colecoes(db)
@@ -362,14 +430,15 @@ def main():
         titulo("PASSO 4 - Consultas")
         consultas(db)
         titulo("PASSO 5 - Checkout com transacao")
-        simular_vendas(cliente, db)
+        simular_vendas(cliente, db, usar_transacao)
         titulo("PASSO 6 - Relatorios (aggregation pipeline)")
         relatorios(db)
         titulo("PASSO 7 - Atualizacoes atomicas em arrays")
         avaliacoes_e_precos(db)
         cliente.close()
     except OperationFailure as erro:
-        print("Falha de operacao (o replica set foi iniciado?):", erro)
+        print("Falha de operacao (usuario/senha corretos? use --usuario/--senha "
+              "ou --sem-auth):", erro)
     except PyMongoError as erro:
         print("Erro ao acessar o MongoDB:", erro)
 
