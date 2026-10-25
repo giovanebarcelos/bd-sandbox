@@ -30,6 +30,7 @@ classNN/
 | Aula | UA | Tema | Diagramas | Oracle | PostgreSQL | Java | Python |
 |---|---|---|---|---|---|---|---|
 | 01 | UA1 | O que é um SBD | ✓ | — | — | — | — |
+| 01B | UA1 | IA assistida: modelos do agente (complementar) | — | — | — | — | — |
 | 02 | UA1 | Arquitetura de SGBD | ✓ | — | — | — | — |
 | 03 | UA1 | Ferramentas | ✓ | ✓ | ✓ | — | — |
 | 04 | UA2 | Entidades e relacionamentos | ✓ | — | — | — | — |
@@ -93,6 +94,17 @@ class28/
 | `BD2804-RedisBlackFriday.py` / `BD2804-RedisRateLimiterFila.js` | Redis | cache, sessão, rate limit, ranking, fila e lock |
 | `BD2805-Neo4jFraudeRecomendacao.py` / `BD2805-Neo4jAntifraude.java` | Neo4j | anéis de fraude e recomendação |
 | `BD2806-CassandraColdChain.py` / `BD2806-CassandraTelemetria.java` | Cassandra | telemetria de caminhões refrigerados |
+
+## IA assistida (Aulas 01B e 32)
+
+Modelos do agente de IA usados da Aula 02 à 32 (política na Aula 01B, Slide 32):
+
+| Pasta | Arquivo | Descrição |
+|---|---|---|
+| `class01B/` | `opencode.json` | Modelo gratuito (`:free`) e permissões do OpenCode: comandos com `ask`, `git push` e `docker compose down -v` negados — a chave de API **não** vai aqui |
+| `class01B/` | `AGENTS.md` | Memória do projeto para o agente, curta; cresce a cada unidade (Aula 01B, Slide 33) |
+| `class32/` | `AGENTS.md`, `opencode.json` | Versão do projeto integrador (Biblioteca) |
+| `class32/` | `USO_DE_IA_modelo.md` | Modelo da seção **Uso de IA** do README da A3, com a tabela de registros (2 pts do critério Organização e documentação) |
 
 ## Licença
 
