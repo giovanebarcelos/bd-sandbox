@@ -1,0 +1,98 @@
+# DespensaViva — PostgreSQL + Oracle XE + testes + aplicações Python e Java.
+#
+#   docker compose up -d --wait                    # sobe os dois bancos já com esquema, dados, procedures, triggers e índices
+#   docker compose run --rm testes                 # 150+ testes (pytest) contra os DOIS bancos
+#   docker compose --profile apps run --rm app-python   # aplicação Python (psycopg + oracledb)
+#   docker compose --profile apps run --rm app-java     # aplicação Java (JDBC)
+#   docker compose run --rm testes python scripts/mutacao.py        # teste de mutação dos scripts SQL
+#   docker compose run --rm testes python performance/medir.py      # planos e tempos antes/depois dos índices
+#   docker compose down -v                         # apaga os dados (a próxima subida recarrega os scripts)
+#
+# O Oracle XE leva 1 a 2 minutos para ficar pronto na PRIMEIRA subida. Portas ocupadas? PG_PORT=5433 ORACLE_PORT=1522 docker compose up -d
+# Senhas abaixo são de laboratório (nunca use em produção); a chave real fica em variável de ambiente, fora do Git.
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: despensa
+      POSTGRES_PASSWORD: despensa_pwd
+      POSTGRES_DB: despensa
+    ports: ["${PG_PORT:-5432}:5432"]
+    volumes:
+      - pg_dados:/var/lib/postgresql/data
+      - ./postgresql:/scripts/postgresql:ro
+      - ./procedures:/scripts/procedures:ro
+      - ./docker/postgres-init.sh:/docker-entrypoint-initdb.d/00-init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U despensa -d despensa"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  oracle:
+    image: gvenzl/oracle-xe:21-slim
+    environment:
+      ORACLE_PASSWORD: bd_admin_pwd           # senha do SYS/SYSTEM
+      APP_USER: despensa
+      APP_USER_PASSWORD: despensa_pwd
+    ports: ["${ORACLE_PORT:-1521}:1521"]
+    volumes:
+      - oracle_dados:/opt/oracle/oradata
+      - ./oracle:/scripts/oracle:ro
+      - ./procedures:/scripts/procedures:ro
+      - ./docker/oracle-init.sh:/container-entrypoint-initdb.d/00-init.sh:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+  testes:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    profiles: ["testes"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      oracle: {condition: service_healthy}
+    volumes: [".:/app"]
+    environment: &conexoes
+      PG_DSN: host=postgres port=5432 dbname=despensa user=despensa password=despensa_pwd
+      PG_ADMIN_DSN: host=postgres port=5432 dbname=postgres user=despensa password=despensa_pwd
+      ORACLE_USER: despensa
+      ORACLE_PASSWORD: despensa_pwd
+      ORACLE_DSN: oracle:1521/XEPDB1
+      ORACLE_ADMIN_USER: system
+      ORACLE_ADMIN_PASSWORD: bd_admin_pwd
+
+  app-python:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    profiles: ["apps"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      oracle: {condition: service_healthy}
+    volumes: [".:/app"]
+    environment: *conexoes
+    command: ["python", "python/despensa_app.py"]
+
+  app-java:
+    build: ./java
+    profiles: ["apps"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      oracle: {condition: service_healthy}
+    environment:
+      PG_URL: jdbc:postgresql://postgres:5432/despensa?escapeSyntaxCallMode=callIfNoReturn
+      PG_USER: despensa
+      PG_PASSWORD: despensa_pwd
+      ORACLE_URL: jdbc:oracle:thin:@//oracle:1521/XEPDB1
+      ORACLE_USER: despensa
+      ORACLE_PASSWORD: despensa_pwd
+
+volumes:
+  pg_dados:
+  oracle_dados:

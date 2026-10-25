@@ -1,0 +1,75 @@
+@startuml
+' despensa.puml — DER da DespensaViva (cozinha comunitária). Notação Crow's Foot (pés de galinha).
+' Visualizar em https://plantuml.com/ ou na extensão PlantUML do VS Code.
+hide circle
+skinparam linetype ortho
+
+entity "CATEGORIA" as categoria {
+  * categoria_id : number <<PK>>
+  --
+  * nome : varchar(60) <<UK>>
+}
+entity "FORNECEDOR" as fornecedor {
+  * fornecedor_id : number <<PK>>
+  --
+  * nome : varchar(100) <<UK>>
+  * tipo : varchar(10)  — DOADOR | COMERCIO
+}
+entity "INSUMO" as insumo {
+  * insumo_id : number <<PK>>
+  --
+  * nome : varchar(80) <<UK>>
+  * unidade : varchar(3)  — KG | L | UN
+  * estoque_minimo : number(10,3)
+  * categoria_id : number <<FK>>
+}
+entity "LOTE" as lote {
+  * lote_id : number <<PK>>
+  --
+  * insumo_id : number <<FK>>
+  * fornecedor_id : number <<FK>>
+  * quantidade_inicial : number(10,3)
+  * quantidade_atual : number(10,3)
+  * data_entrada : date
+  * data_validade : date
+}
+entity "MOVIMENTACAO" as movimentacao {
+  * mov_id : number <<PK>>
+  --
+  * lote_id : number <<FK>>
+  * tipo : varchar(10)  — ENTRADA | CONSUMO | DESCARTE
+  * quantidade : number(10,3)
+  * data_hora : timestamp
+  motivo : varchar(100)
+}
+entity "RECEITA" as receita {
+  * receita_id : number <<PK>>
+  --
+  * nome : varchar(80) <<UK>>
+  * porcoes : number
+}
+entity "RECEITA_INSUMO" as receita_insumo {
+  * receita_id : number <<PK,FK>>
+  * insumo_id : number <<PK,FK>>
+  --
+  * quantidade_por_porcao : number(10,3)
+}
+entity "AUDITORIA_LOTE" as auditoria_lote {
+  * aud_id : number <<PK>>
+  --
+  * lote_id : number
+  * operacao : varchar(10)
+  qtd_antes : number(10,3)
+  qtd_depois : number(10,3)
+  * usuario_banco : varchar(100)
+  * data_hora : timestamp
+}
+
+categoria      ||--o{ insumo         : classifica
+insumo         ||--o{ lote           : "é recebido em"
+fornecedor     ||--o{ lote           : fornece
+lote           ||--|{ movimentacao   : registra
+receita        ||--|{ receita_insumo : "usa"
+insumo         ||--o{ receita_insumo : "entra em"
+lote           ..o{ auditoria_lote   : "é auditado (trigger)"
+@enduml

@@ -1,0 +1,150 @@
+DespensaViva — planos e tempos ANTES e DEPOIS dos índices (gerado por performance/medir.py)
+
+====================================================================================================
+PostgreSQL
+====================================================================================================
+200.000 lotes e 400.000 movimentações carregados em 3.7 s
+
+--- FEFO: lotes de um insumo por validade
+SELECT lote_id, data_validade, quantidade_atual FROM lote WHERE insumo_id = 500 AND data_validade >= CURRENT_DATE AND quantidade_atual > 0 ORDER BY data_validade, lote_id
+
+>>> ANTES dos índices (mediana de 100 execuções: 11.41 ms)
+Gather Merge  (cost=4827.85..4840.96 rows=114 width=13) (actual time=9.425..11.361 rows=195 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Buffers: shared hit=1515
+  ->  Sort  (cost=3827.84..3828.12 rows=114 width=13) (actual time=7.639..7.643 rows=98 loops=2)
+        Sort Key: data_validade, lote_id
+        Sort Method: quicksort  Memory: 28kB
+        Buffers: shared hit=1515
+        Worker 0:  Sort Method: quicksort  Memory: 27kB
+        ->  Parallel Seq Scan on lote  (cost=0.00..3823.94 rows=114 width=13) (actual time=0.086..7.574 rows=98 loops=2)
+              Filter: ((quantidade_atual > '0'::numeric) AND (insumo_id = 500) AND (data_validade >= CURRENT_DATE))
+              Rows Removed by Filter: 99902
+              Buffers: shared hit=1471
+Planning Time: 0.144 ms
+Execution Time: 11.387 ms
+
+>>> DEPOIS dos índices (mediana de 100 execuções: 0.28 ms)
+Sort  (cost=553.61..554.09 rows=194 width=13) (actual time=0.099..0.105 rows=195 loops=1)
+  Sort Key: data_validade, lote_id
+  Sort Method: quicksort  Memory: 31kB
+  Buffers: shared hit=198
+  ->  Bitmap Heap Scan on lote  (cost=6.41..546.24 rows=194 width=13) (actual time=0.017..0.080 rows=195 loops=1)
+        Recheck Cond: ((insumo_id = 500) AND (data_validade >= CURRENT_DATE))
+        Filter: (quantidade_atual > '0'::numeric)
+        Heap Blocks: exact=195
+        Buffers: shared hit=198
+        ->  Bitmap Index Scan on idx_lote_insumo_validade  (cost=0.00..6.36 rows=194 width=0) (actual time=0.008..0.008 rows=195 loops=1)
+              Index Cond: ((insumo_id = 500) AND (data_validade >= CURRENT_DATE))
+              Buffers: shared hit=3
+Planning Time: 0.053 ms
+Execution Time: 0.115 ms
+
+--- FK: movimentações de um lote
+SELECT COUNT(*), SUM(quantidade) FROM movimentacao WHERE lote_id = 123456
+
+>>> ANTES dos índices (mediana de 100 execuções: 12.50 ms)
+Finalize Aggregate  (cost=6883.30..6883.31 rows=1 width=40) (actual time=9.872..12.068 rows=1 loops=1)
+  Buffers: shared hit=2942
+  ->  Gather  (cost=6883.18..6883.29 rows=1 width=40) (actual time=9.798..12.062 rows=2 loops=1)
+        Workers Planned: 1
+        Workers Launched: 1
+        Buffers: shared hit=2942
+        ->  Partial Aggregate  (cost=5883.18..5883.19 rows=1 width=40) (actual time=8.128..8.128 rows=1 loops=2)
+              Buffers: shared hit=2942
+              ->  Parallel Seq Scan on movimentacao  (cost=0.00..5883.18 rows=1 width=5) (actual time=4.511..8.123 rows=1 loops=2)
+                    Filter: (lote_id = 123456)
+                    Rows Removed by Filter: 199999
+                    Buffers: shared hit=2942
+Planning Time: 0.072 ms
+Execution Time: 12.093 ms
+
+>>> DEPOIS dos índices (mediana de 100 execuções: 0.04 ms)
+Aggregate  (cost=11.47..11.48 rows=1 width=40) (actual time=0.005..0.005 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Index Scan using idx_mov_lote on movimentacao  (cost=0.42..11.46 rows=2 width=5) (actual time=0.003..0.003 rows=2 loops=1)
+        Index Cond: (lote_id = 123456)
+        Buffers: shared hit=5
+Planning Time: 0.025 ms
+Execution Time: 0.011 ms
+
+====================================================================================================
+Oracle
+====================================================================================================
+200.000 lotes e 400.000 movimentações carregados em 24.0 s
+
+--- FEFO: lotes de um insumo por validade
+SELECT lote_id, data_validade, quantidade_atual FROM lote WHERE insumo_id = 500 AND data_validade >= TRUNC(SYSDATE) AND quantidade_atual > 0 ORDER BY data_validade, lote_id
+
+>>> ANTES dos índices (mediana de 100 execuções: 2.60 ms)
+Plan hash value: 3319594928
+ 
+-----------------------------------
+| Id  | Operation          | Name |
+-----------------------------------
+|   0 | SELECT STATEMENT   |      |
+|   1 |  SORT ORDER BY     |      |
+|*  2 |   TABLE ACCESS FULL| LOTE |
+-----------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter("INSUMO_ID"=500 AND "DATA_VALIDADE">=TRUNC(SYSDATE@!) AND 
+              "QUANTIDADE_ATUAL">0 AND "QUANTIDADE_INICIAL">0)
+
+>>> DEPOIS dos índices (mediana de 100 execuções: 0.32 ms)
+Plan hash value: 3281171387
+ 
+-------------------------------------------------------------------------
+| Id  | Operation                            | Name                     |
+-------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                     |                          |
+|   1 |  SORT ORDER BY                       |                          |
+|*  2 |   TABLE ACCESS BY INDEX ROWID BATCHED| LOTE                     |
+|*  3 |    INDEX RANGE SCAN                  | IDX_LOTE_INSUMO_VALIDADE |
+-------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter("QUANTIDADE_ATUAL">0 AND "QUANTIDADE_INICIAL">0)
+   3 - access("INSUMO_ID"=500 AND "DATA_VALIDADE">=TRUNC(SYSDATE@!))
+
+--- FK: movimentações de um lote
+SELECT COUNT(*), SUM(quantidade) FROM movimentacao WHERE lote_id = 123456
+
+>>> ANTES dos índices (mediana de 100 execuções: 4.61 ms)
+Plan hash value: 1105313043
+ 
+-------------------------------------------
+| Id  | Operation          | Name         |
+-------------------------------------------
+|   0 | SELECT STATEMENT   |              |
+|   1 |  SORT AGGREGATE    |              |
+|*  2 |   TABLE ACCESS FULL| MOVIMENTACAO |
+-------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter("LOTE_ID"=123456)
+
+>>> DEPOIS dos índices (mediana de 100 execuções: 0.04 ms)
+Plan hash value: 2401482753
+ 
+-------------------------------------------------------------
+| Id  | Operation                            | Name         |
+-------------------------------------------------------------
+|   0 | SELECT STATEMENT                     |              |
+|   1 |  SORT AGGREGATE                      |              |
+|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED| MOVIMENTACAO |
+|*  3 |    INDEX RANGE SCAN                  | IDX_MOV_LOTE |
+-------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - access("LOTE_ID"=123456)
+

@@ -1,0 +1,61 @@
+erDiagram
+    CATEGORIA ||--o{ INSUMO : classifica
+    INSUMO ||--o{ LOTE : "é recebido em"
+    FORNECEDOR ||--o{ LOTE : fornece
+    LOTE ||--|{ MOVIMENTACAO : registra
+    RECEITA ||--|{ RECEITA_INSUMO : usa
+    INSUMO ||--o{ RECEITA_INSUMO : "entra em"
+    LOTE ||..o{ AUDITORIA_LOTE : "é auditado (trigger)"
+
+    CATEGORIA {
+        number categoria_id PK
+        varchar nome UK
+    }
+    FORNECEDOR {
+        number fornecedor_id PK
+        varchar nome UK
+        varchar tipo "DOADOR ou COMERCIO"
+    }
+    INSUMO {
+        number insumo_id PK
+        varchar nome UK
+        varchar unidade "KG, L ou UN"
+        number estoque_minimo
+        number categoria_id FK
+    }
+    LOTE {
+        number lote_id PK
+        number insumo_id FK
+        number fornecedor_id FK
+        number quantidade_inicial
+        number quantidade_atual
+        date data_entrada
+        date data_validade
+    }
+    MOVIMENTACAO {
+        number mov_id PK
+        number lote_id FK
+        varchar tipo "ENTRADA, CONSUMO ou DESCARTE"
+        number quantidade
+        timestamp data_hora
+        varchar motivo
+    }
+    RECEITA {
+        number receita_id PK
+        varchar nome UK
+        number porcoes
+    }
+    RECEITA_INSUMO {
+        number receita_id PK,FK
+        number insumo_id PK,FK
+        number quantidade_por_porcao
+    }
+    AUDITORIA_LOTE {
+        number aud_id PK
+        number lote_id
+        varchar operacao
+        number qtd_antes
+        number qtd_depois
+        varchar usuario_banco
+        timestamp data_hora
+    }
