@@ -51,7 +51,7 @@ classNN/
 | 19 | UA7 | PL/pgSQL | — | — | ✓ | — | — |
 | 20 | UA7 | Triggers | — | ✓ | ✓ | — | — |
 | 21 | UA8 | ACID e concorrência | ✓ | ✓ | ✓ | — | — |
-| 22 | UA8 | Recuperação de falhas | ✓ | — | — | — | — |
+| 22 | UA8 | Recuperação de falhas | ✓ | ✓ | ✓ | — | — |
 | 23 | UA9 | Catálogo do banco de dados | — | ✓ | ✓ | — | — |
 | 24 | UA9 | Índices e planos de execução | — | ✓ | ✓ | — | — |
 | 25 | UA9 | Otimização e tuning | — | ✓ | ✓ | — | — |
@@ -62,6 +62,24 @@ classNN/
 | 30 | UA12 | Conexões: JDBC e DB-API | — | ✓ | ✓ | ✓ | ✓ |
 | 31 | UA12 | Segurança: usuários, roles e grants | — | ✓ | ✓ | — | — |
 | 32 | UA12 | Projeto integrador final | — | ✓ | ✓ | ✓ | ✓ |
+
+## Tutoriais Passo a Passo (Aulas 18 a 27)
+
+Cada aula de 18 a 27 (exceto a 23) tem tutoriais passo a passo, em PostgreSQL e/ou Oracle, publicados junto com as aulas. Os scripts usados por eles ficam aqui, com o sequencial seguinte ao do script da aula:
+
+| Aula | Oracle | PostgreSQL |
+|---|---|---|
+| 18 | `class18/oracle/BD1802-TutorialPlSql.sql` | — |
+| 19 | — | `class19/postgresql/BD1902-TutorialPlPgSql.sql` |
+| 20 | `class20/oracle/BD2002-TutorialTriggers.sql` | `class20/postgresql/BD2002-TutorialTriggers.sql` |
+| 21 | `class21/oracle/BD2102-TutorialTransacoes.sql` | `class21/postgresql/BD2102-TutorialTransacoes.sql` |
+| 22 | `class22/oracle/BD2202-TutorialFlashback.sql` | `class22/postgresql/BD2202-TutorialWal.sql`, `BD2203-LabPitr.sh` |
+| 24 | `class24/oracle/BD2402-CargaBoaSaude.sql`, `BD2403-TutorialIndices.sql` | `class24/postgresql/BD2402-CargaBoaSaude.sql`, `BD2403-TutorialIndices.sql` |
+| 25 | `class25/oracle/BD2502-TutorialTuning.sql` (usuario `aula25`) | `class25/postgresql/BD2502-TutorialTuning.sql` |
+| 26 | `class26/oracle/BD2602-DockerComposeFull.yml` (imagem com RMAN), `BD2603-TutorialBackupDados.sql` | `class26/postgresql/BD2602-TutorialBackupDados.sql`, `BD2603-RotinaBackup.sh` |
+| 27 | `class27/oracle/BD2701-TutorialParticionamento.sql` | `class27/postgresql/BD2702-DockerComposeReplicacao.yml`, `BD2702-init-primario.sh`, `BD2703-TutorialParticionamento.sql` |
+
+O PostgreSQL dos tutoriais e o do ambiente Docker da disciplina (PostgreSQL 17); o Oracle e o XE 21c da Aula 03 (`class03/oracle/BD0301-DockerCompose.yml`). Todos os scripts foram executados de ponta a ponta nessas versoes.
 
 ## Como Executar
 

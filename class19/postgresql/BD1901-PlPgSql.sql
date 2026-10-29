@@ -413,31 +413,41 @@ DECLARE
     v_preco   livro.preco%TYPE;
     v_estoque livro.estoque%TYPE;
 BEGIN
-    SELECT preco, estoque INTO v_preco, v_estoque
-      FROM livro WHERE livro_id = p_livro_id
-      FOR UPDATE;
+    -- O trabalho fica num sub-bloco com EXCEPTION e o COMMIT fica FORA dele:
+    -- todo bloco BEGIN ... EXCEPTION abre uma subtransacao (SAVEPOINT
+    -- implicito), e o PostgreSQL recusa COMMIT dentro dela ("cannot commit
+    -- while a subtransaction is active"). Se der erro, a subtransacao desfaz
+    -- sozinha tudo o que o sub-bloco fez.
+    BEGIN
+        SELECT preco, estoque INTO v_preco, v_estoque
+          FROM livro WHERE livro_id = p_livro_id
+          FOR UPDATE;
 
-    IF v_estoque < p_quantidade THEN
-        RAISE EXCEPTION 'Estoque insuficiente para o pedido.' USING ERRCODE = 'P0003';
-    END IF;
+        IF v_estoque < p_quantidade THEN
+            RAISE EXCEPTION 'Estoque insuficiente para o pedido.' USING ERRCODE = 'P0003';
+        END IF;
 
-    INSERT INTO pedido (pedido_id, cliente_id, valor_total)
-    VALUES (p_pedido_id, p_cliente_id, v_preco * p_quantidade);
+        INSERT INTO pedido (pedido_id, cliente_id, valor_total)
+        VALUES (p_pedido_id, p_cliente_id, v_preco * p_quantidade);
 
-    INSERT INTO item_pedido (item_pedido_id, pedido_id, livro_id, quantidade, valor_unitario)
-    VALUES (nextval('item_pedido_seq'), p_pedido_id, p_livro_id, p_quantidade, v_preco);
+        INSERT INTO item_pedido (item_pedido_id, pedido_id, livro_id, quantidade, valor_unitario)
+        VALUES (nextval('item_pedido_seq'), p_pedido_id, p_livro_id, p_quantidade, v_preco);
 
-    UPDATE livro SET estoque = estoque - p_quantidade WHERE livro_id = p_livro_id;
+        UPDATE livro SET estoque = estoque - p_quantidade WHERE livro_id = p_livro_id;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE NOTICE 'Pedido cancelado (rollback): %', SQLERRM;
+            RAISE;
+    END;
 
     COMMIT;
     RAISE NOTICE 'Pedido % registrado com sucesso.', p_pedido_id;
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE NOTICE 'Pedido cancelado (rollback): %', SQLERRM;
-        RAISE;
 END;
 $$;
+
+-- Teste: o primeiro pedido e registrado; o segundo e recusado e desfeito
+CALL registrar_pedido_completo(2001, 2, 104, 5);
+CALL registrar_pedido_completo(2002, 2, 104, 999);
 
 
 --------------------------------------------------------------------------------

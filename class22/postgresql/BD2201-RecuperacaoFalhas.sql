@@ -49,9 +49,10 @@ SELECT * FROM pg_ls_waldir()
 -- disco de forma consistente, limitando o WAL que precisa ser re-lido em
 -- caso de crash recovery.
 -- ----------------------------------------------------------------------------
-SELECT checkpoints_timed, checkpoints_req, checkpoint_write_time,
-       checkpoint_sync_time
-  FROM pg_stat_bgwriter;
+-- PostgreSQL 17+: os contadores de checkpoint ficam em pg_stat_checkpointer
+-- (ate a versao 16: pg_stat_bgwriter.checkpoints_timed/checkpoints_req)
+SELECT num_timed, num_requested, write_time, sync_time
+  FROM pg_stat_checkpointer;
 
 -- Forcar um checkpoint manual (uso administrativo, nao rotineiro):
 -- CHECKPOINT;
