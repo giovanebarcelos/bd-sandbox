@@ -65,7 +65,7 @@ classNN/
 
 ## Tutoriais Passo a Passo (Aulas 18 a 27)
 
-Cada aula de 18 a 27 (exceto a 23) tem tutoriais passo a passo, em PostgreSQL e/ou Oracle, publicados junto com as aulas. Os scripts usados por eles ficam aqui, com o sequencial seguinte ao do script da aula:
+Cada aula de 18 a 27 tem tutoriais passo a passo, em PostgreSQL e/ou Oracle, publicados junto com as aulas. Os scripts usados por eles ficam aqui, com o sequencial seguinte ao do script da aula:
 
 | Aula | Oracle | PostgreSQL |
 |---|---|---|
@@ -74,6 +74,7 @@ Cada aula de 18 a 27 (exceto a 23) tem tutoriais passo a passo, em PostgreSQL e/
 | 20 | `class20/oracle/BD2002-TutorialTriggers.sql` | `class20/postgresql/BD2002-TutorialTriggers.sql` |
 | 21 | `class21/oracle/BD2102-TutorialTransacoes.sql` | `class21/postgresql/BD2102-TutorialTransacoes.sql` |
 | 22 | `class22/oracle/BD2202-TutorialFlashback.sql` | `class22/postgresql/BD2202-TutorialWal.sql`, `BD2203-LabPitr.sh` |
+| 23 | `class23/oracle/BD2302-TutorialCatalogo.sql` | `class23/postgresql/BD2302-TutorialCatalogo.sql` |
 | 24 | `class24/oracle/BD2402-CargaBoaSaude.sql`, `BD2403-TutorialIndices.sql` | `class24/postgresql/BD2402-CargaBoaSaude.sql`, `BD2403-TutorialIndices.sql` |
 | 25 | `class25/oracle/BD2502-TutorialTuning.sql` (usuario `aula25`) | `class25/postgresql/BD2502-TutorialTuning.sql` |
 | 26 | `class26/oracle/BD2602-DockerComposeFull.yml` (imagem com RMAN), `BD2603-TutorialBackupDados.sql` | `class26/postgresql/BD2602-TutorialBackupDados.sql`, `BD2603-RotinaBackup.sh` |
