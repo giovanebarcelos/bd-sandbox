@@ -130,18 +130,22 @@ COMMIT;
 --  WHERE id_conta = 1;
 --                                              UPDATE conta_corrente SET saldo = saldo + 50
 --                                               WHERE id_conta = 1;  -- mesma linha!
+--                                              -- B FICA ESPERANDO o lock de A
 -- COMMIT; -- sucesso, saldo vira 650
---                                              COMMIT;
+--                                              -- o UPDATE de B termina com:
 --                                              -- ERROR: could not serialize access
 --                                              -- due to concurrent update
 --                                              -- SQLSTATE 40001
+--                                              ROLLBACK;
 --
--- Conclusao: diferente do locking pessimista do Oracle, o PostgreSQL NAO
--- bloqueia B enquanto A esta rodando (MVCC deixa ambos avancarem lendo
--- snapshots proprios). O conflito so eh detectado na hora do COMMIT de B,
--- que recebe erro de serializacao e deve reexecutar a transacao (retry).
--- Isso troca "espera bloqueante" (Oracle locking) por "otimismo com
--- possibilidade de abortar e repetir" (Postgres SERIALIZABLE).
+-- Conclusao: duas transacoes que alteram a MESMA linha se bloqueiam tambem
+-- no PostgreSQL (o MVCC elimina a espera entre leitor e escritor, nao entre
+-- dois escritores). Quando A confirma, o proprio UPDATE de B falha com
+-- 40001: B nao pode sobrescrever uma versao que o seu snapshot nao enxerga,
+-- e deve reexecutar a transacao (retry). O erro so fica para o COMMIT no
+-- "write skew" (cada transacao altera uma linha DIFERENTE com base no que
+-- leu), que o SERIALIZABLE do PostgreSQL detecta (SSI) e o do Oracle nao.
+-- Roteiro completo, testado: BD2102-TutorialTransacoes.sql, passos 9 e 10.
 
 -- ----------------------------------------------------------------------------
 -- 7. Monitoramento de transacoes e locks ativos

@@ -1,0 +1,79 @@
+# BD2702-DockerComposeReplicacao.yml
+# Aula 27 - Laboratorio de streaming replication (PostgreSQL 17)
+# Disciplina: Banco de Dados | UA10
+#
+# Dois servidores, separados do ambiente Docker da disciplina:
+#   primario  -> porta 5440 do computador (aceita leitura e escrita)
+#   replica   -> porta 5441 do computador (hot standby: so leitura)
+#
+# Na primeira subida, a replica espera o primario ficar pronto, copia os
+# dados dele com pg_basebackup -R (que ja grava o primary_conninfo e o
+# standby.signal) e passa a receber o WAL em streaming.
+#
+# Uso (na pasta class27/postgresql do repositorio):
+#   docker compose -f BD2702-DockerComposeReplicacao.yml up -d
+#   docker exec -it pg-primario psql -U postgres
+#   docker exec -it pg-replica  psql -U postgres
+# Para apagar tudo (inclusive os dados): ... down -v
+
+name: replicacao
+
+services:
+  primario:
+    image: postgres:17
+    container_name: pg-primario
+    hostname: primario
+    environment:
+      POSTGRES_PASSWORD: postgres
+      TZ: America/Sao_Paulo
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
+      - -c
+      - hot_standby=on
+    ports:
+      - "5440:5432"
+    volumes:
+      - primario_data:/var/lib/postgresql/data
+      - ./BD2702-init-primario.sh:/docker-entrypoint-initdb.d/BD2702-init-primario.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  replica:
+    image: postgres:17
+    container_name: pg-replica
+    hostname: replica
+    user: postgres
+    environment:
+      PGPASSWORD: replicador
+      TZ: America/Sao_Paulo
+    entrypoint:
+      - bash
+      - -c
+      - |
+        if [ ! -s /var/lib/postgresql/data/PG_VERSION ]; then
+          echo "replica: copiando os dados do primario com pg_basebackup..."
+          pg_basebackup -h primario -U replicador -D /var/lib/postgresql/data \
+                        -R -X stream -C -S slot_replica -P
+          chmod 700 /var/lib/postgresql/data
+        fi
+        exec postgres -c hot_standby=on
+    ports:
+      - "5441:5432"
+    volumes:
+      - replica_data:/var/lib/postgresql/data
+    depends_on:
+      primario:
+        condition: service_healthy
+
+volumes:
+  primario_data:
+  replica_data:

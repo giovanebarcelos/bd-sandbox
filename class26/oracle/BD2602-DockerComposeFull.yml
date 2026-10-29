@@ -1,0 +1,40 @@
+# BD2602-DockerComposeFull.yml
+# Aula 26 - Laboratorio de backup Oracle: XE 21c na imagem COMPLETA
+# Disciplina: Banco de Dados | UA10
+#
+# Por que outro container? A imagem "gvenzl/oracle-xe:21-slim", usada desde a
+# Aula 03, remove o RMAN e nao consegue rodar o Data Pump. A imagem "21-full"
+# tem as duas ferramentas. Ela e maior (cerca de 3 GB) e roda na porta 1522,
+# entao pode ficar ligada junto com o XE da disciplina (porta 1521).
+#
+# Uso (na pasta class26/oracle do repositorio):
+#   docker compose -f BD2602-DockerComposeFull.yml up -d
+#   docker logs -f bd-oracle-xe-full        (espere "DATABASE IS READY TO USE!")
+#   docker exec -it bd-oracle-xe-full rman target /
+#   docker exec -it bd-oracle-xe-full sqlplus / as sysdba
+# Usuario de aplicacao: bd_aluno / bd_aluno_pwd (servico XEPDB1)
+# Para apagar tudo (inclusive os dados e os backups): ... down -v
+
+name: oracle-backup
+
+services:
+  oracle-xe-full:
+    image: gvenzl/oracle-xe:21-full
+    container_name: bd-oracle-xe-full
+    ports:
+      - "1522:1521"
+    environment:
+      ORACLE_PASSWORD: "bd_admin_pwd"
+      APP_USER: "bd_aluno"
+      APP_USER_PASSWORD: "bd_aluno_pwd"
+    volumes:
+      - oracle_full_data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+volumes:
+  oracle_full_data:
