@@ -15,15 +15,21 @@
  *
  * Pre-requisitos:
  *   npm install
- *   docker run -d --name bd28-redis -p 6379:6379 redis:7-alpine
+ *   Redis em localhost:6379 - qualquer um serve:
+ *     a) container "redis" do curso (A1/DBTools/Docker, profile "redis"),
+ *        senha "redis" (padrao deste script)
+ *     b) container "bd28-redis" da Aula 28 (class28/docker), sem senha:
+ *        REDIS_URL=redis://localhost:6379 node BD2804-RedisRateLimiterFila.js
  *
  * Execucao:
  *   node BD2804-RedisRateLimiterFila.js
+ *   PowerShell: $env:REDIS_URL="redis://localhost:6379"; node BD2804-RedisRateLimiterFila.js
  */
 
 const { createClient } = require("redis");
 
-const URL_REDIS = "redis://localhost:6379";
+// usuario "default", senha "redis" (container "redis" do curso)
+const URL_REDIS = process.env.REDIS_URL || "redis://default:redis@localhost:6379";
 
 // ---------------------------------------------------------------------------
 // 1. Rate limiter de janela deslizante

@@ -15,7 +15,11 @@
  *   4. Leitura com nivel de consistencia por consulta (LOCAL_QUORUM)
  *
  * Pre-requisito: rodar antes o BD2806 em Python (cria o keyspace coldchain) e
- *   docker run -d --name bd28-cassandra -p 9042:9042 cassandra:4.1
+ * ter o Cassandra em localhost:9042:
+ *   a) container "cassandra" do curso (A1/DBTools/Docker, profile "cassandra"):
+ *      usuario cassandra / senha cassandra (padrao deste programa)
+ *   b) container "bd28-cassandra" da Aula 28, sem senha: export CASSANDRA_USER=""
+ *   Variaveis aceitas: CASSANDRA_HOST, CASSANDRA_USER, CASSANDRA_PASSWORD
  *
  * Dependencia Maven (ver pom.xml desta pasta):
  *   org.apache.cassandra:java-driver-core:4.19.0
@@ -40,6 +44,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
@@ -52,12 +57,25 @@ class BD2806CassandraTelemetria {
     private static final int EM_VOO_MAX = 128;   // requisicoes simultaneas
     private static final LocalDate DIA = LocalDate.of(2026, 10, 9);
 
+    private static String env(String nome, String padrao) {
+        String valor = System.getenv(nome);
+        return valor == null ? padrao : valor;
+    }
+
     public static void main(String[] args) throws Exception {
-        try (CqlSession sessao = CqlSession.builder()
-                .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
+        String host = env("CASSANDRA_HOST", "127.0.0.1");
+        String usuario = env("CASSANDRA_USER", "cassandra");
+        String senha = env("CASSANDRA_PASSWORD", "cassandra");
+
+        CqlSessionBuilder construtor = CqlSession.builder()
+                .addContactPoint(new InetSocketAddress(host, 9042))
                 .withLocalDatacenter("datacenter1")      // obrigatorio no driver 4.x
-                .withKeyspace("coldchain")
-                .build()) {
+                .withKeyspace("coldchain");
+        if (!usuario.isEmpty()) {                        // vazio: bd28-cassandra, sem senha
+            construtor = construtor.withAuthCredentials(usuario, senha);
+        }
+
+        try (CqlSession sessao = construtor.build()) {
 
             PreparedStatement insLeitura = sessao.prepare("""
                     INSERT INTO leituras_por_sensor_dia

@@ -2,9 +2,12 @@
 // BD2805 - Roteiro Cypher para o Neo4j Browser (Aula 28C - Neo4j em Profundidade)
 // Prof. Giovane Barcelos
 //
-// Abra http://localhost:7474 (usuario neo4j / senha bd28senha123) e execute
-// cada bloco separadamente. Pre-requisito: BD2805-Neo4jFraudeRecomendacao.py
-// (ou rode o bloco de carga minima abaixo).
+// Abra o Neo4j Browser e execute cada bloco separadamente:
+//   - DBTools (A1/DBTools/Docker, profile "neo4j"): http://neo4j.localhost
+//     Connect URL neo4j://localhost:7687, usuario neo4j / senha neo4j
+//   - compose da Aula 28 (bd28-neo4j): http://localhost:7474, senha bd28senha123
+// Pre-requisito: BD2805-Neo4jFraudeRecomendacao.py (ou rode o bloco de carga
+// minima abaixo).
 // ============================================================================
 
 // --- Carga minima (se nao rodou o script Python)

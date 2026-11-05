@@ -13,9 +13,12 @@
  *   score 1..2   -> REVISAO MANUAL
  *   score >= 3   -> BLOQUEADO
  *
- * Pre-requisito: rodar antes o BD2805 em Python (popula o grafo) e
- *   docker run -d --name bd28-neo4j -p 7474:7474 -p 7687:7687 \
- *       -e NEO4J_AUTH=neo4j/bd28senha123 neo4j:5
+ * Pre-requisito: rodar antes o BD2805 em Python (popula o grafo) e ter o Neo4j
+ * com Bolt em localhost:7687:
+ *   a) container "neo4j" do curso (A1/DBTools/Docker, profile "neo4j"):
+ *      usuario neo4j / senha neo4j (padrao deste programa)
+ *   b) container "bd28-neo4j" da Aula 28: export NEO4J_PASSWORD=bd28senha123
+ *   Variaveis aceitas: NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
  *
  * Dependencia Maven (ver pom.xml desta pasta):
  *   org.neo4j.driver:neo4j-java-driver:5.28.5
@@ -41,9 +44,15 @@ import org.neo4j.driver.exceptions.Neo4jException;
 
 class BD2805Neo4jAntifraude {
 
-    private static final String URI = "neo4j://localhost:7687";
-    private static final String USUARIO = "neo4j";
-    private static final String SENHA = "bd28senha123";
+    // Conexao: variaveis de ambiente com o padrao do container "neo4j" do curso
+    private static final String URI = env("NEO4J_URI", "neo4j://localhost:7687");
+    private static final String USUARIO = env("NEO4J_USER", "neo4j");
+    private static final String SENHA = env("NEO4J_PASSWORD", "neo4j");
+
+    private static String env(String nome, String padrao) {
+        String valor = System.getenv(nome);
+        return valor == null ? padrao : valor;
+    }
 
     /** Novo cadastro recebido pela API (Java 16+ record). */
     record NovoCadastro(String id, String nome, String telefone, String dispositivo, String cep) {}

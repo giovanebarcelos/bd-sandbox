@@ -6,6 +6,14 @@ Demonstra a conexao com PostgreSQL via psycopg2, com um exemplo usando
 try/finally (controle explicito de commit/rollback e fechamento) e outro
 usando um pool de conexoes (psycopg2.pool).
 
+Ambiente da disciplina (A1/DBTools/Docker): o script
+class30/postgresql/BD3003-TutorialVetcare.sql cria o banco vetcare, a tabela
+e o role app_user.
+
+Credenciais por variavel de ambiente (nunca no codigo que vai para o Git):
+    PG_HOST, PG_PORT, PG_DATABASE, PG_USER
+    PG_PASSWORD (padrao senha_segura - senha do laboratorio)
+
 Tabela de apoio (criar previamente no banco de teste):
 
     CREATE TABLE funcionarios (
@@ -19,16 +27,19 @@ Instalacao:
     pip install psycopg2-binary
 """
 
+import os
+
 import psycopg2
 import psycopg2.pool
 
-# Ajuste host/porta/banco/usuario/senha conforme o ambiente de laboratorio.
 CONFIG_CONEXAO = dict(
-    host="localhost",
-    port=5432,
-    dbname="vetcare",
-    user="app_user",
-    password="senha_segura",
+    host=os.getenv("PG_HOST", "localhost"),
+    port=int(os.getenv("PG_PORT", "5432")),
+    dbname=os.getenv("PG_DATABASE", "vetcare"),
+    user=os.getenv("PG_USER", "app_user"),
+    password=os.getenv("PG_PASSWORD", "senha_segura"),
+    application_name="BD3002-python",   # aparece em pg_stat_activity
+    connect_timeout=5,                  # segundos: nao trava se o host sumir
 )
 
 
@@ -58,6 +69,7 @@ def buscar_funcionarios_por_cargo(cargo):
 
         if not linhas:
             print("Nenhum funcionario encontrado para o cargo informado.")
+        return True
 
     except psycopg2.OperationalError as erro:
         print("Erro ao conectar ao PostgreSQL (banco indisponivel ou credenciais invalidas).")
@@ -88,6 +100,7 @@ def exemplo_com_pool():
 
 
 if __name__ == "__main__":
-    buscar_funcionarios_por_cargo("Veterinario")
-    print()
-    exemplo_com_pool()
+    # o exemplo de pool so roda se a primeira conexao funcionou
+    if buscar_funcionarios_por_cargo("Veterinario"):
+        print()
+        exemplo_com_pool()

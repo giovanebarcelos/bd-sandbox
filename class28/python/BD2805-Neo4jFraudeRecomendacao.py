@@ -23,19 +23,28 @@ Passo a passo:
 
 Pre-requisitos:
     pip install neo4j
-    docker run -d --name bd28-neo4j -p 7474:7474 -p 7687:7687 \
-        -e NEO4J_AUTH=neo4j/bd28senha123 neo4j:5
-    (Neo4j Browser em http://localhost:7474 para ver o grafo desenhado)
+    Neo4j com Bolt em localhost:7687 - qualquer um serve:
+      a) container "neo4j" do curso (A1/DBTools/Docker, profile "neo4j"):
+         usuario neo4j / senha neo4j (padrao deste script)
+           docker compose --profile neo4j up -d
+         Neo4j Browser: http://neo4j.localhost
+      b) container "bd28-neo4j" da Aula 28 (class28/docker): senha bd28senha123
+         NEO4J_PASSWORD=bd28senha123 python3 BD2805-Neo4jFraudeRecomendacao.py
+         Neo4j Browser: http://localhost:7474
 
 Execucao:
     python3 BD2805-Neo4jFraudeRecomendacao.py
+    PowerShell: $env:NEO4J_PASSWORD="bd28senha123"; python BD2805-Neo4jFraudeRecomendacao.py
 """
+
+import os
 
 from neo4j import GraphDatabase
 from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
-URI = "neo4j://localhost:7687"
-AUTH = ("neo4j", "bd28senha123")
+# Conexao: variaveis de ambiente com o padrao do container "neo4j" do curso
+URI = os.getenv("NEO4J_URI", "neo4j://localhost:7687")
+AUTH = (os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD", "neo4j"))
 
 
 def titulo(texto):

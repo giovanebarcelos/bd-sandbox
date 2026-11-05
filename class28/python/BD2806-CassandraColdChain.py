@@ -23,24 +23,35 @@ Passo a passo:
 
 Pre-requisitos:
     pip install cassandra-driver
-    docker run -d --name bd28-cassandra -p 9042:9042 cassandra:4.1
-    (aguarde ~60 s ate o no aceitar conexoes)
+    Cassandra em localhost:9042 - qualquer um serve:
+      a) container "cassandra" do curso (A1/DBTools/Docker, profile "cassandra"):
+         usuario cassandra / senha cassandra (padrao deste script)
+           docker compose --profile cassandra up -d
+      b) container "bd28-cassandra" da Aula 28 (class28/docker), sem senha:
+         CASSANDRA_USER="" python3 BD2806-CassandraColdChain.py
+    (aguarde ~60-90 s ate o no aceitar conexoes: "healthy" no docker compose ps)
 
 Execucao:
     python3 BD2806-CassandraColdChain.py
+    PowerShell: $env:CASSANDRA_USER=""; python BD2806-CassandraColdChain.py
 """
 
+import os
 import random
 import time
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 from cassandra import ConsistencyLevel, InvalidRequest, Unavailable
+from cassandra.auth import PlainTextAuthProvider
 from cassandra.cluster import Cluster, NoHostAvailable
 from cassandra.concurrent import execute_concurrent_with_args
 from cassandra.query import SimpleStatement
 
-CONTATOS = ["127.0.0.1"]
+# Conexao: variaveis de ambiente com o padrao do container "cassandra" do curso
+CONTATOS = [os.getenv("CASSANDRA_HOST", "127.0.0.1")]
+USUARIO = os.getenv("CASSANDRA_USER", "cassandra")
+SENHA = os.getenv("CASSANDRA_PASSWORD", "cassandra")
 KEYSPACE = "coldchain"
 HOJE = date(2026, 10, 8)
 
@@ -275,7 +286,9 @@ def limites(sessao):
 
 
 def main():
-    cluster = Cluster(CONTATOS, protocol_version=5)
+    # sem usuario (bd28-cassandra): conecta sem autenticacao
+    auth = PlainTextAuthProvider(USUARIO, SENHA) if USUARIO else None
+    cluster = Cluster(CONTATOS, protocol_version=5, auth_provider=auth)
     try:
         sessao = cluster.connect()
         titulo("1. Keyspace e tabelas (query-first)")

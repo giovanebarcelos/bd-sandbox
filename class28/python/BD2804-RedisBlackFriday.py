@@ -20,20 +20,32 @@ continua sendo a FONTE DA VERDADE; o Redis entra como camada de apoio para:
 
 Pre-requisitos:
     pip install redis
-    docker run -d --name bd28-redis -p 6379:6379 redis:7-alpine
+    Redis em localhost:6379 - qualquer um serve:
+      a) container "redis" do curso (A1/DBTools/Docker, profile "redis"):
+         senha "redis" (padrao deste script)
+           docker compose --profile redis up -d
+      b) container "bd28-redis" da Aula 28 (class28/docker), sem senha:
+         REDIS_PASSWORD="" python3 BD2804-RedisBlackFriday.py
 
 Execucao:
     python3 BD2804-RedisBlackFriday.py
+    REDIS_HOST=192.168.0.10 REDIS_PASSWORD=outra python3 BD2804-RedisBlackFriday.py
+    PowerShell: $env:REDIS_PASSWORD=""; python BD2804-RedisBlackFriday.py
 """
 
 import json
+import os
 import sqlite3
 import time
 import uuid
 
 import redis
 
-REDIS = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+# Conexao: variaveis de ambiente com o padrao do container "redis" do curso
+REDIS = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"),
+                    port=int(os.getenv("REDIS_PORT", "6379")),
+                    password=os.getenv("REDIS_PASSWORD", "redis") or None,
+                    db=0, decode_responses=True)
 ATRASO_BD = 0.150  # 150 ms por consulta "cara" no relacional
 
 
@@ -266,6 +278,10 @@ def demo_pipeline():
 def main():
     try:
         REDIS.ping()
+    except redis.AuthenticationError as erro:   # subclasse de ConnectionError: vem antes
+        print("Falha de autenticacao no Redis:", erro)
+        print("Dica: ajuste REDIS_PASSWORD (vazio para o bd28-redis, sem senha).")
+        return
     except redis.ConnectionError as erro:
         print("Redis indisponivel:", erro)
         return

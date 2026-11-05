@@ -3,7 +3,10 @@
 -- Disciplina: Banco de Dados | Aula 28D - Cassandra em Profundidade
 -- Prof. Giovane Barcelos
 --
--- Execucao:
+-- Execucao (container "cassandra" do A1/DBTools/Docker, profile "cassandra"):
+--   docker cp BD2806-ColdChainSchema.cql cassandra:/tmp/
+--   docker exec -it cassandra cqlsh -u cassandra -p cassandra -f /tmp/BD2806-ColdChainSchema.cql
+-- Compose da Aula 28 (sem senha):
 --   docker cp BD2806-ColdChainSchema.cql bd28-cassandra:/tmp/
 --   docker exec -it bd28-cassandra cqlsh -f /tmp/BD2806-ColdChainSchema.cql
 --
